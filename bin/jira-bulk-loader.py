@@ -3,7 +3,7 @@
 
 import argparse
 from jirabulkloader.task_extractor import TaskExtractor
-from jirabulkloader.task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorJiraValidationError, TaskExtractorTemplateErrorJson, TaskExtractorJiraCreationError
+from jirabulkloader.task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorJiraValidationError, TaskExtractorTemplateErrorJson, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem
 from requests.exceptions import ConnectionError
 
 prg_description="""Uses template file to create many tasks in Jira at once.
@@ -48,13 +48,8 @@ try:
 
     print "Creating tasks.."
     breakdown = task_ext.create_tasks(tasks)
-except TaskExtractorTemplateErrorProject, e:
-    print e.message
-    exit(1)
-except TaskExtractorJiraValidationError, e:
-    print e.message
-    exit(1)
-except TaskExtractorJiraCreationError, e:
+
+except (TaskExtractorTemplateErrorProject, TaskExtractorJiraValidationError, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem) as e:
     print e.message
     exit(1)
 except TaskExtractorTemplateErrorJson, e:

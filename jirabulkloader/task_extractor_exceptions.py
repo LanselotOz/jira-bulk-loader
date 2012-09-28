@@ -17,4 +17,8 @@ class TaskExtractorTemplateErrorJson(Exception):
     def __init__(self, arg):
         self.error_element = arg
 
+class TaskExtractorJiraHostProblem(Exception):
+    def __init__(self, arg):
+        self.message = arg
+
 

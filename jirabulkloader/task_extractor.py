@@ -4,7 +4,7 @@ import re
 import base64
 from urllib2 import Request, urlopen, URLError
 import simplejson as json
-from task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorTemplateErrorJson, TaskExtractorJiraValidationError, TaskExtractorJiraCreationError
+from task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorTemplateErrorJson, TaskExtractorJiraValidationError, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem
 
 
 class TaskExtractor:
@@ -55,7 +55,7 @@ class TaskExtractor:
 
         full_url = "%s/rest/api/2/user/assignable/search?username=%s&project=%s" % (self.jira_url, user, project)
         try:
-            result = json.load(self._jira_request(full_url, None, 'GET'))
+           result = json.load(self._jira_request(full_url, None, 'GET'))
         except URLError, e:
             if hasattr(e, 'code'):
                 if e.code == 403 or e.code == 401:
@@ -64,6 +64,9 @@ class TaskExtractor:
                 else:
                     error_message = "The username '%s' and the project '%s' can not be validated.\nJira response: Error %s, %s" % (user, project, e.code, e.read())
                     raise TaskExtractorJiraValidationError(error_message)
+            elif hasattr(e, 'reason'):
+                error_message = "%s: %s" % (e.reason, self.jira_url)
+                raise TaskExtractorJiraHostProblem(error_message)
         if len(result) == 0: # the project is okay but username is missing n Jira
             error_message = "ERROR: the username '%s' specified in template can not be validated." % user
             raise TaskExtractorJiraValidationError(error_message)
@@ -221,7 +224,7 @@ class TaskExtractor:
         return (h5_task_key, h5_task_caption, h5_task_desc)
 
     def _create_h4_task_and_return_key_caption(self, h4_task_json):
-        h4_task_json['issuetype'] = 'Task'
+        h4_task_json['issuetype'] = 'Epic Story'
         h4_task_key = self.create_issue(h4_task_json)
         for key in self.h5_tasks_to_link_to_h4_task:
             self.create_link(h4_task_key, key)

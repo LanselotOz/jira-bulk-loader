@@ -134,8 +134,8 @@ $VAR1$VAR2 *assignee*
   def test_create_tasks_Single_h4_task(self):
     self.te.create_issue = MagicMock()
     self.te.create_issue.return_value = 'DRY-RUN-XXXX'
-    input_list = [{'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}]
-    expected_result = {'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}
+    input_list = [{'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}]
+    expected_result = {'issuetype': 'Epic Story', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}
     expected_output = 'h4. h4 task (DRY-RUN-XXXX)'
     self.assertEquals(self.te.create_tasks(input_list), expected_output)
     self.te.create_issue.assert_called_once_with(expected_result)
@@ -144,7 +144,7 @@ $VAR1$VAR2 *assignee*
     self.te.create_issue = MagicMock()
     self.te.create_issue.return_value = 'DRY-RUN-XXXX'
     self.te.update_issue_desc = MagicMock()
-    input_list = [{'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'description': 'h5 task description', 'summary': 'h5 task'}]
+    input_list = [{'assignee': 'assignee', 'markup': 'h5.', 'description': 'h5 task description', 'summary': 'h5 task'}]
     expected_result = {'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'description': 'h5 task description', 'summary': 'h5 task'}
     expected_output = 'h5. h5 task (DRY-RUN-XXXX)\nh5 task description'
     self.assertEquals(self.te.create_tasks(input_list), expected_output)
@@ -155,13 +155,13 @@ $VAR1$VAR2 *assignee*
     self.te.create_issue = MagicMock()
     self.te.create_issue.return_value = 'DRY-RUN-XXXX'
     self.te.update_issue_desc = MagicMock()
-    input_list = [{'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}, \
-      {'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description': 'h5 task description'}, \
-      {'issuetype': 'Sub-task', 'assignee': 'assignee', 'markup': '#', 'description': 'line1 description\nline2 description', 'summary': 'sub-task'}]
+    input_list = [{'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}, \
+      {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description': 'h5 task description'}, \
+      {'assignee': 'assignee', 'markup': '#', 'description': 'line1 description\nline2 description', 'summary': 'sub-task'}]
     expected_result = [call({'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'description': 'h5 task description', 'summary': 'h5 task'}),
         call({'description': 'line1 description\nline2 description', 'parent': 'DRY-RUN-XXXX', 'markup': '#', 'summary': 'sub-task', 'assignee': 'assignee', \
             'issuetype': 'Sub-task'}),
-        call({'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'})]
+        call({'issuetype': 'Epic Story', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'})]
     self.te.create_tasks(input_list)
     self.assertEquals(self.te.create_issue.call_args_list, expected_result)
     MagicMock.assert_called_once_with(self.te.update_issue_desc, 'DRY-RUN-XXXX', 'h5 task description\n# sub-task (DRY-RUN-XXXX)')
@@ -170,12 +170,12 @@ $VAR1$VAR2 *assignee*
     self.te.create_issue = MagicMock()
     self.te.create_issue.return_value = 'DRY-RUN-XXXX'
     self.te.update_issue_desc = MagicMock()
-    input_list = [{'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'}, \
-      {'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}, \
-      {'issuetype': 'Sub-task', 'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task'}]
+    input_list = [{'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'}, \
+      {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}, \
+      {'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task'}]
     expected_result = [call({'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}),
         call({'parent': 'DRY-RUN-XXXX', 'markup': '#', 'summary': 'sub-task', 'assignee': 'assignee', 'issuetype': 'Sub-task'}),
-        call({'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'})]
+        call({'issuetype': 'Epic Story', 'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'})]
     expected_output = 'h4. h4 task (DRY-RUN-XXXX)\nh5. h5 task (DRY-RUN-XXXX)\n# sub-task (DRY-RUN-XXXX)'
     self.assertEquals(self.te.create_tasks(input_list), expected_output)
     self.assertEquals(self.te.create_issue.call_args_list, expected_result)
@@ -184,18 +184,18 @@ $VAR1$VAR2 *assignee*
   def test_create_tasks_Tasks_with_text(self):
     self.te.create_issue = MagicMock()
     self.te.create_issue.return_value = 'DRY-RUN-XXXX'
-    input_list = [{'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'}, \
-        {'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description':'h5 desc'}, {'text':'text line'}, \
-        {'issuetype': 'Sub-task', 'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task'}]
+    input_list = [{'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'}, \
+        {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description':'h5 desc'}, {'text':'text line'}, \
+        {'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task'}]
     expected_result = 'h4. h4 task (DRY-RUN-XXXX)\nh5. h5 task (DRY-RUN-XXXX)\nh5 desc\ntext line\n# sub-task (DRY-RUN-XXXX)'
     self.assertEquals(self.te.create_tasks(input_list), expected_result)
 
   def test_create_tasks_Tasks_with_no_h4_task(self):
     self.te.create_issue = MagicMock()
     self.te.create_issue.return_value = 'DRY-RUN-XXXX'
-    input_list = [{'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task 1'}, \
-        {'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task 2'}, \
-        {'issuetype': 'Sub-task', 'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task of h5 task 2'}]
+    input_list = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task 1'}, \
+        {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task 2'}, \
+        {'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task of h5 task 2'}]
     expected_result = [call({'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task 1'}), \
         call({'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task 2'}), \
         call({'parent': 'DRY-RUN-XXXX', 'markup': '#', 'summary': 'sub-task of h5 task 2', 'assignee': 'assignee', 'issuetype': 'Sub-task'})]

@@ -18,7 +18,7 @@ parser.add_argument('-D', dest='dueDate', help='dueDate  (YYYY-mm-DD). For examp
 parser.add_argument('--dry', dest='dry_run', action='store_true', help='Make a dry run. It checks everything but does not create tasks', default=False)
 
 mandatory = parser.add_argument_group('mandatory arguments')
-mandatory.add_argument('-H', dest='hostname', required=True, help='Jira hostname. Without http://')
+mandatory.add_argument('-H', dest='hostname', required=True, help='Jira hostname with http:// or https://')
 mandatory.add_argument('-U', dest='username', required=True, help='your Jira username')
 mandatory.add_argument('-P', dest='password', required=True, help='your Jira password')
 
@@ -35,9 +35,7 @@ if args.dueDate: options['duedate'] = args.dueDate
 if args.priority: options['priority'] = {'name':args.priority}
 if args.project: options['project'] = {'key':args.project}
 
-jira_url = "http://" + args.hostname
-
-task_ext = TaskExtractor(jira_url, args.username, args.password, options, dry_run = args.dry_run)
+task_ext = TaskExtractor(args.hostname, args.username, args.password, options, dry_run = args.dry_run)
 
 try:
     print "Parsing task list.."

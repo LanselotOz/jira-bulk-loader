@@ -19,7 +19,18 @@ class TaskExtractor:
 
         self.default_params = options
         self.dry_run = dry_run
-        self.jira_url = jira_url
+        self.jira_url = self._validate_url_and_type(jira_url)
+
+
+#####################################################################################
+# helpers for validate_load()
+
+    def _validate_url_and_type(self, url):
+        match = re.search("^https?://", url)
+        return url if match else "http://" + url
+
+# end of load() helpers
+#####################################################################################
 
 
     def validate_load(self, task_list):

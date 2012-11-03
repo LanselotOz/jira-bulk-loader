@@ -91,6 +91,21 @@ $VAR1$VAR2 *assignee*
     expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}]
     self.assertEquals(expected_result, self.te.load(input_text))
 
+  def test_load_Variable_with_similar_name(self):
+    input_text1 = """
+[VAR=h5.]
+[VAR_VAR= task]
+h5. $VAR_VAR$VAR_VAR *assignee* 
+"""
+    input_text2 = """
+[VAR_VAR= task]
+[VAR=h5.]
+$VAR $VAR_VAR$VAR_VAR *assignee* 
+"""
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'task task'}]
+    self.assertEquals(expected_result, self.te.load(input_text1))
+    self.assertEquals(expected_result, self.te.load(input_text2))
+
   def test_load_Recognize_template_json(self):
     input_text = '{"item1":{"name":"test"}}'
     self.te.load(input_text)
@@ -230,21 +245,17 @@ $VAR1$VAR2 *assignee*
 
 
 ##########################################################
-### integration tests
+### run-time variables
 
-#  def test_full_run(self):
-#    input_text = """
-#{"item":"value"}
-#[VAR1=h5.]
-#[VAR2= h5 task]
-#$VAR1$VAR2 *assignee*
-#h5. h5 task2  *assignee* {"item":"new_value"}
-#"""
-#    excpected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}, \
-#            {'assignee': 'assignee', 'markup': 'h5', 'summary': 'h5 task2', 'tmpl_ext': {'item': 'new_value'}}]
-#    load_result = self.te.load(input_text)
-#    self.assertEquals(excpected_result, load_result)
-
+  def test_load_recognize_run_time_variables(self):
+    input_text = """
+[VAR1=1]
+h5. h5 task *assignee* [TASK_KEY=$?]
+=line1 description
+"""
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description':'line1 description', 'rt_ext':'TASK_KEY'}]
+    self.assertEquals(expected_result, self.te.load(input_text))
+    self.assertEquals({'VAR1':'1'}, self.te.tmpl_vars)
 
 
 #if __name__ == "__main__":

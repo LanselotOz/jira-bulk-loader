@@ -94,7 +94,7 @@ class TaskExtractor:
         result = []
         input_text = input_text.lstrip('\n');
 
-        pattern_task = re.compile('^(h5\.|h4\.|#[*#]?)\s+(.+)\s+\*(\w+)\*(?:\s+%(\d{4}-\d\d-\d\d)%)?(?:\s+({.+}))?')
+        pattern_task = re.compile('^(h5\.|h4\.|#[*#]?)\s+(.+)\s+\*(\w+)\*(?:\s+%(\d{4}-\d\d-\d\d)%)?(?:\s+({.+}))?(?:\s+\[(\w+)\])?')
         pattern_description = re.compile('=')
         pattern_vars = re.compile('^\[(\w+)=(.+)\]$')
         pattern_json = re.compile('^{.+}$')
@@ -111,7 +111,7 @@ class TaskExtractor:
                 else:
                     match_vars = pattern_vars.search(line)
                     if match_vars:
-                        self.tmpl_vars[match_vars.group(1)] = match_vars.group(2)
+                        self._add_template_variable(match_vars.group(1), match_vars.group(2))
                     else:
                         if pattern_json.match(line): # if json
                             self.tmpl_json.update(self._validated_json_loads(line))
@@ -128,21 +128,23 @@ class TaskExtractor:
         if not len(self.tmpl_json) == 0:
             task_json['tmpl_ext'] = self.tmpl_json.copy()
         if match.group(5):
-             if not 'tmpl_ext' in task_json: task_json['tmpl_ext'] = {}
-             task_json['tmpl_ext'].update(self._validated_json_loads(match.group(5)))
+            task_json.setdefault('tmpl_ext', {}).update(self._validated_json_loads(match.group(5)))
         return task_json
 
     def _add_task_description(self, task_json, input_line):
-        if 'description' in task_json:
-            task_json['description'] = '\n'.join([task_json['description'], input_line])
-        else:
-            task_json['description'] = input_line
+        desc = 'description'
+        task_json[desc] = '\n'.join([task_json[desc], input_line]) if task_json.get(desc) else input_line
         return task_json
 
     def _replace_template_vars(self, input_line):
-        for key in self.tmpl_vars:
-            input_line = re.sub('\$' + key, self.tmpl_vars[key], input_line)
-        return input_line
+        return self.tmpl_vars_regex.sub(lambda match: self.tmpl_vars[match.group(1)], input_line)
+
+    def _add_template_variable(self, name, value):
+        self.tmpl_vars[name] = value
+        # here I recompile template vars regex
+        # sorted() is used to put vars with longer names at the beginning of regex
+        # otherwise vars with similar names will not be replaced as '|' is not greedy
+        self.tmpl_vars_regex = re.compile("\$(" + "|".join(map(re.escape, sorted(self.tmpl_vars.keys( ), reverse=True))) + ")")
 
     def _validated_json_loads(self, input_line):
         result = ''
@@ -188,8 +190,12 @@ class TaskExtractor:
                         h5_task_ext = ''
                     h5_task_key, h5_task_caption, h5_task_desc = self._create_h5_task_and_return_key_caption_description(line)
                 elif line['markup'][0] == '#':
-                    sub_task_caption = self._create_sub_task_and_return_caption(line, h5_task_key)
-                    h5_task_ext = '\n'.join([h5_task_ext, sub_task_caption]) if h5_task_ext else sub_task_caption
+                    if 'h5_task_key' in vars():
+                        sub_task_caption = self._create_sub_task_and_return_caption(line, h5_task_key)
+                        h5_task_ext = '\n'.join([h5_task_ext, sub_task_caption]) if h5_task_ext else sub_task_caption
+                    else:
+                        sub_task_caption = self._create_sub_task_and_return_caption(line)
+                        summary = ('\n'.join([sub_task_caption, summary]) if summary else sub_task_caption)
                 elif line['markup'] == 'h4.':
                     h4_task = line
             elif 'text' in line:
@@ -220,8 +226,9 @@ class TaskExtractor:
             summary_list.append(desc)
         return '\n'.join(summary_list)
 
-    def _create_sub_task_and_return_caption(self, sub_task_json, parent_task_key):
-        sub_task_json['parent'] = parent_task_key
+    def _create_sub_task_and_return_caption(self, sub_task_json, parent_task_key = None):
+        if parent_task_key:
+            sub_task_json['parent'] = parent_task_key
         sub_task_json['issuetype'] = 'Sub-task'
         sub_task_key = self.create_issue(sub_task_json)
         return self._make_task_caption(sub_task_json,  sub_task_key)

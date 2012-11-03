@@ -1,0 +1,11 @@
+
+{"project": {"key": "MYPRJ"}}
+{"parent":{"key":"MYPRJ-1454"}}
+# test sub-task 1-1 *assignee1*
+=sub-task 1-1 description
+# test sub-task 1-2 *assignee1*
+
+{"parent":{"key":"MYPRJ-1455"}}
+# test sub-task 2 *assignee2*
+=sub-task 2 description
+

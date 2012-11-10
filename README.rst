@@ -1,11 +1,9 @@
 Introduction
 ============
 
-I used to waste hours cloning tasks in JIRA, editing their summaries, description and etc. Step by step I came to the idea that I need a template of my frequently used tasks so that I can re-create them very easy and effortless.
-
 The key idea of jira-bulk-loader is an activity template.
 
-The template is written in human language with a few markup rules. jira-bulk-loader.py uses the prepared template to create the corresponding set of tasks in less than one minute.
+The template is written in human language with a few markup rules. jira-bulk-loader.py uses the prepared template to create the corresponding set of tasks easy and effortless.
 
 
 
@@ -151,8 +149,24 @@ is equivalent to
     | 	h5. Second task summary \*John\*
     |	=description 194567
 
-the important difference is that you don't need to change assignee or description of each task in your template. You change variable value instead and it is applied to every line in the template. 
+the important difference is that you don't need to change assignee or description of each task in your template. You change variable value instead and it is applied to every line in the template.
 
+
+Run-time variables
+==================
+
+Sometime it is necessary to create a reference to another task in the template. Such requirement can be fulfilled with a help of template run-time variables.
+
+    |  h5. h5 task1 *assignee* [TASK_KEY1]
+    |  h5. h5 task2 *assignee* [TASK_KEY2]
+    |  h5. h5 task3 *assignee*
+    |  =description $TASK_KEY1
+    |  # Sub-task *assignee*
+    |  =description $TASK_KEY2
+
+When jira-bulk-loader creates 'h5 task1' and 'h5 task2' in Jira, $TASK_KEY1 and $TASK_KEY2 will be have their issue_id.
+
+The only restriction is: you can't reference a task that has not been created yet, i.e. template variables cannot be used before assignment.
 
 
 Issues and new ideas

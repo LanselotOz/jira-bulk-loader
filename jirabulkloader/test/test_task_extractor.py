@@ -197,8 +197,8 @@ $VAR $VAR_VAR$VAR_VAR *assignee*
     MagicMock.assert_called_once_with(self.te.update_issue_desc, 'DRY-RUN-XXXX', '# sub-task (DRY-RUN-XXXX)')
 
   def test_create_tasks_Tasks_with_text(self):
-    self.te.create_issue = MagicMock()
-    self.te.create_issue.return_value = 'DRY-RUN-XXXX'
+    self.te.create_issue_http = MagicMock()
+    self.te.create_issue_http.return_value = 'DRY-RUN-XXXX'
     input_list = [{'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'}, \
         {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description':'h5 desc'}, {'text':'text line'}, \
         {'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task'}]
@@ -250,12 +250,45 @@ $VAR $VAR_VAR$VAR_VAR *assignee*
   def test_load_recognize_run_time_variables(self):
     input_text = """
 [VAR1=1]
-h5. h5 task *assignee* [TASK_KEY=$?]
+h5. h5 task *assignee* [TASK_KEY]
 =line1 description
 """
     expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description':'line1 description', 'rt_ext':'TASK_KEY'}]
     self.assertEquals(expected_result, self.te.load(input_text))
     self.assertEquals({'VAR1':'1'}, self.te.tmpl_vars)
+
+  def test_create_issue_add_rt_var(self):
+    test_issue_id = 'TEST-RUN-XXXX'
+    self.te._create_issue_http = MagicMock()
+    self.te._create_issue_http.return_value = test_issue_id
+    input_dict = {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'rt_ext':'TASK_KEY'}
+    self.assertEquals(test_issue_id, self.te.create_issue(input_dict))
+    self.assertEquals({'TASK_KEY':test_issue_id}, self.te.rt_vars)
+
+  def test_create_issue_replace_rt_variable(self):
+    input_text = """
+h5. h5 task1 *assignee* [TASK_KEY1]
+h5. h5 task2 *assignee* [TASK_KEY2]
+h5. h5 task3 *assignee*
+=description $TASK_KEY1
+# Sub-task *assignee*
+=description $TASK_KEY2
+"""
+    test_issue_id = 'TEST-RUN-XXXX'
+    self.te._create_issue_http = MagicMock()
+    self.te._create_issue_http.return_value = test_issue_id
+    self.te.update_issue_desc = MagicMock()
+
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task1', 'rt_ext':'TASK_KEY1'},
+            {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task2', 'rt_ext':'TASK_KEY2'},
+        {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task3', 'description':'description $TASK_KEY1'},
+        {'assignee': 'assignee', 'markup': '#', 'summary': 'Sub-task', 'description':'description $TASK_KEY2'}]
+    load_result = self.te.load(input_text)
+    self.assertEquals(expected_result, load_result)
+
+    expected_result_load = 'h5. h5 task1 (TEST-RUN-XXXX)\nh5. h5 task2 (TEST-RUN-XXXX)\nh5. h5 task3 (TEST-RUN-XXXX)\ndescription TEST-RUN-XXXX\n# Sub-task (TEST-RUN-XXXX)'
+    self.assertEquals(self.te.create_tasks(load_result), expected_result_load)
+    self.te.update_issue_desc.assert_called_once_with(test_issue_id, 'description TEST-RUN-XXXX\n# Sub-task (TEST-RUN-XXXX)')
 
 
 #if __name__ == "__main__":

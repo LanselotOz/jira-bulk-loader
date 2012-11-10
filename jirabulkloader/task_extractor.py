@@ -12,7 +12,8 @@ class TaskExtractor:
     def __init__(self, jira_url, username, password, options, dry_run = False):
         self.h5_tasks_to_link_to_h4_task = [] # will be used to link h5-tasks to the root task
         self.tmpl_vars = {} # template variables dict
-        self.tmpl_json = {}
+        self.tmpl_json = {} # template json structures, for example {"project": {"key": "KEY"}}
+        self.rt_vars = {} # run-time variables (issueIDs)
 
         self.username = username
         self.password = password
@@ -129,6 +130,8 @@ class TaskExtractor:
             task_json['tmpl_ext'] = self.tmpl_json.copy()
         if match.group(5):
             task_json.setdefault('tmpl_ext', {}).update(self._validated_json_loads(match.group(5)))
+        if match.group(6):
+            task_json['rt_ext'] = match.group(6)
         return task_json
 
     def _add_task_description(self, task_json, input_line):
@@ -183,6 +186,8 @@ class TaskExtractor:
 
         for line in task_list:
             if 'markup' in line:
+                if ('description' in line): 
+                    line['description'] = self._replace_realtime_vars(line['description'])
                 if line['markup'] == 'h5.':
                     if 'h5_task_key' in vars(): # if new h5 task begins
                         h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
@@ -221,7 +226,7 @@ class TaskExtractor:
         summary_list = [caption]
         if ext:
             desc = '\n'.join([desc, ext]) if desc else ext
-            self.update_issue_desc(key, desc)
+            self.update_issue_desc(key, self._replace_realtime_vars(desc))
         if desc:
             summary_list.append(desc)
         return '\n'.join(summary_list)
@@ -252,7 +257,23 @@ class TaskExtractor:
 #####################################################################################
 
     def create_issue(self, issue):
+        if ('description' in issue) and self.rt_vars:
+            issue['description'] = self._replace_realtime_vars(issue['description'])
+        issue_id = self._create_issue_http(issue)
+        if issue.has_key('rt_ext'):
+            self._add_runtime_variable(issue['rt_ext'], issue_id)
+        return issue_id
+
+    def _add_runtime_variable(self, name, value):
+        self.rt_vars.update({name:value})
+        self.rt_vars_regex = re.compile("\$(" + "|".join(map(re.escape, sorted(self.rt_vars.keys( ), reverse=True))) + ")")
+
+    def _replace_realtime_vars(self, desc):
+        return self.rt_vars_regex.sub(lambda match: self.rt_vars[match.group(1)], desc) if self.rt_vars else desc
+
+    def _create_issue_http(self, issue):
         """
+        Invoke JIRA HTTP API to create issue
         """
 
         if not self.dry_run:

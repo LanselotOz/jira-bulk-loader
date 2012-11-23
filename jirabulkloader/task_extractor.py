@@ -57,7 +57,8 @@ class TaskExtractor:
             if 'project' in self.default_params:
                 return self.default_params['project']['key']
             else:
-                raise TaskExtractorTemplateErrorProject('Missing project key in line: ' + input_line['summary'])
+                raise TaskExtractorTemplateErrorProject('Missing project key in line: ' + input_line['summary'] \
+                        + '.\nYou should add \'{"project": {"key": "JIRA"}}\' to the template, where "JIRA" must be replaced by your real project key.')
 
     def _validate_user(self, user, project):
         """
@@ -74,7 +75,7 @@ class TaskExtractor:
                     error_message = "Your username and password are not accepted by Jira."
                     raise TaskExtractorJiraValidationError(error_message)
                 else:
-                    error_message = "The username '%s' and the project '%s' can not be validated.\nJira response: Error %s, %s" % (user, project, e.code, e.read())
+                    error_message = "The username '%s' and the project '%s' can not be validated.\nJira response: Error %s, %s" % (user, project, e.code, full_url) #e.read())
                     raise TaskExtractorJiraValidationError(error_message)
             elif hasattr(e, 'reason'):
                 error_message = "%s: %s" % (e.reason, self.jira_url)

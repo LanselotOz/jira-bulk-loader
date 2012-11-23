@@ -7,12 +7,20 @@ The template is written in human language with a few markup rules. jira-bulk-loa
 
 
 
-Installation
-============
+Linux installation
+==================
 
-Download and install using pip:
+    sudo easy_install jira-bulk-loader
 
-    pip install jira-bulk-loader
+By default jira-bulk-loader.py will be installed in the /usr/bin/ folder.
+
+
+Windows installation
+====================
+
+    C:/Python27/Scripts/easy_install.exe jira-bulk-loader
+
+By default jira-bulk-loader.py will be installed in the C:/Python27/Scripts/ folder.
 
 
 
@@ -31,7 +39,7 @@ Template:
 
 command: 
 
-	./jira-bulk-loader.py -U <your_username> -P <your_password> -H jira.your_domain.org -W PRKEY template_file
+	jira-bulk-loader.py -U <your_username> -P <your_password> -H jira.your_domain.org -W PRKEY template_file
 
 two tasks will be created and assigned to *assignee* in the project with a project key *PRKEY*.
 
@@ -54,7 +62,7 @@ Template:
 
 and the command:
 
-	./jira-bulk-loader.py -U <your_username> -P <your_password> -H jira.your_domain.org -D 2012-09-20 -W PRKEY template_file
+	jira-bulk-loader.py -U <your_username> -P <your_password> -H jira.your_domain.org -D 2012-09-20 -W PRKEY template_file
 
 It will create a task with two subtasks. Moreover it also sets due date 2012-09-18 (YYYY-mm-DD) to 2nd sub-task, and 2012-09-20 to the task and its first sub-task.
 

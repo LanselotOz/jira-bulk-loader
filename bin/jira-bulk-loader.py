@@ -6,10 +6,12 @@ from jirabulkloader.task_extractor import TaskExtractor
 from jirabulkloader.task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorJiraValidationError, TaskExtractorTemplateErrorJson, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem
 from requests.exceptions import ConnectionError
 
-prg_description="""Uses template file to create many tasks in Jira at once.
-For more information about template format please visit http://bitbucket.org/oktopuz/jira-bulk-loader"""
+prg_description="""Uses template file to create many tasks in Jira at once"""
 
-parser = argparse.ArgumentParser(description=prg_description, formatter_class=argparse.RawDescriptionHelpFormatter)
+prg_epilog="""Report bugs to: <https://bitbucket.org/oktopuz/jira-bulk-loader/issues>
+Project home page: <https://bitbucket.org/oktopuz/jira-bulk-loader>"""
+
+parser = argparse.ArgumentParser(description=prg_description, formatter_class=argparse.RawDescriptionHelpFormatter, epilog=prg_epilog)
 
 parser.add_argument('template_file', type=argparse.FileType('rU'), help='file containing tasks definition')
 parser.add_argument('-W', dest='project', help='Project key')

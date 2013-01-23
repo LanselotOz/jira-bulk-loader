@@ -6,11 +6,23 @@ The key idea of jira-bulk-loader is an activity template.
 The template is written in human language with a few markup rules. jira-bulk-loader.py uses the prepared template to create the corresponding set of tasks easy and effortless.
 
 
+Requirements
+============
+
+#. Python 2.6 or 2.7
+#. JIRA REST API version 2 (i.e. JIRA v5.0 and above)
+
 
 Linux installation
 ==================
 
-    sudo easy_install jira-bulk-loader
+To install jira-bulk-loader, simply: ::
+
+    $ pip install jira-bulk-loader
+
+Or, if you absolutely must: ::
+
+    $ easy_install jira-bulk-loader
 
 By default jira-bulk-loader.py will be installed in the /usr/bin/ folder.
 
@@ -18,10 +30,13 @@ By default jira-bulk-loader.py will be installed in the /usr/bin/ folder.
 Windows installation
 ====================
 
-    C:/Python27/Scripts/easy_install.exe jira-bulk-loader
+To install jira-bulk-loader on Windows:
+
+#. install Python 2.7 - http://www.python.org/download/windows/
+#. install setuptools - http://pypi.python.org/pypi/setuptools
+#. C:/Python27/Scripts/easy_install.exe jira-bulk-loader
 
 By default jira-bulk-loader.py will be installed in the C:/Python27/Scripts/ folder.
-
 
 
 Very simple case

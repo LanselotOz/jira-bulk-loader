@@ -5,6 +5,7 @@ import base64
 from urllib2 import Request, urlopen, URLError
 import simplejson as json
 from task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorTemplateErrorJson, TaskExtractorJiraValidationError, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem
+from jiraConnect import JiraConnect, JiraConnectConnectionError, JiraConnectActionError
 
 
 class TaskExtractor:
@@ -15,12 +16,10 @@ class TaskExtractor:
         self.tmpl_json = {} # template json structures, for example {"project": {"key": "KEY"}}
         self.rt_vars = {} # run-time variables (issueIDs)
 
-        self.username = username
-        self.password = password
-
         self.default_params = options
         self.dry_run = dry_run
-        self.jira_url = self._validate_url_and_type(jira_url)
+
+        self.jira_connect = JiraConnect(self._validate_url_and_type(jira_url), username, password)
 
 
 #####################################################################################
@@ -66,23 +65,33 @@ class TaskExtractor:
         http://docs.atlassian.com/jira/REST/latest/#id120417
         """
 
-        full_url = "%s/rest/api/2/user/assignable/search?username=%s&project=%s" % (self.jira_url, user, project)
+        full_url = "user/assignable/search?username=%s&project=%s" % (user, project)
         try:
-           result = json.load(self._jira_request(full_url, None, 'GET'))
-        except URLError, e:
-            if hasattr(e, 'code'):
-                if e.code == 403 or e.code == 401:
-                    error_message = "Your username and password are not accepted by Jira."
-                    raise TaskExtractorJiraValidationError(error_message)
-                else:
-                    error_message = "The username '%s' and the project '%s' can not be validated.\nJira response: Error %s, %s" % (user, project, e.code, full_url) #e.read())
-                    raise TaskExtractorJiraValidationError(error_message)
-            elif hasattr(e, 'reason'):
-                error_message = "%s: %s" % (e.reason, self.jira_url)
-                raise TaskExtractorJiraHostProblem(error_message)
-        if len(result) == 0: # the project is okay but username is missing n Jira
-            error_message = "ERROR: the username '%s' specified in template can not be validated." % user
-            raise TaskExtractorJiraValidationError(error_message)
+            self.jira_connect.get('user/assignable/search', username=user, project=project)
+        except JiraConnectActionError, e:
+            if e.code == 403 or e.code == 401:
+                error_message = "Your username and password are not accepted by Jira."
+                raise TaskExtractorJiraValidationError(error_message)
+            else:
+                raise TaskExtractorJiraValidationError(e.message)
+#        try:
+#            res = self._jira_request(full_url, None, 'GET')
+#            print res
+#            result = json.loads(res)
+#        except URLError, e:
+#            if hasattr(e, 'code'):
+#                if e.code == 403 or e.code == 401:
+#                    error_message = "Your username and password are not accepted by Jira."
+#                    raise TaskExtractorJiraValidationError(error_message)
+#                else:
+#                    error_message = "The username '%s' and the project '%s' can not be validated.\nJira response: Error %s, %s" % (user, project, e.code, full_url) #e.read())
+#                    raise TaskExtractorJiraValidationError(error_message)
+#            elif hasattr(e, 'reason'):
+#                error_message = "%s: %s" % (e.reason, self.jira_url)
+#                raise TaskExtractorJiraHostProblem(error_message)
+#        if len(result) == 0: # the project is okay but username is missing n Jira
+#            error_message = "ERROR: the username '%s' specified in template can not be validated." % user
+#            raise TaskExtractorJiraValidationError(error_message)
 
 
 # end of load() helpers
@@ -95,6 +104,7 @@ class TaskExtractor:
         """
         result = []
         input_text = input_text.lstrip('\n');
+        line_number = 1
 
         pattern_task = re.compile('^(h5\.|h4\.|#[*#]?)\s+(.+)\s+\*(\w+)\*(?:\s+%(\d{4}-\d\d-\d\d)%)?(?:\s+({.+}))?(?:\s+\[(\w+)\])?')
         pattern_description = re.compile('=')
@@ -102,23 +112,25 @@ class TaskExtractor:
         pattern_json = re.compile('^{.+}$')
 
         for line in input_text.splitlines():
-                if self.tmpl_vars:
-                    line = self._replace_template_vars(line)
-                line = line.rstrip()
-                match_task = pattern_task.search(line)
-                if match_task:
-                    result.append(self._make_json_task(match_task))
-                elif pattern_description.match(line): # if description
-                    result[-1] = self._add_task_description(result[-1], line[1:])
+            if self.tmpl_vars:
+                line = self._replace_template_vars(line)
+            line = line.rstrip()
+            match_task = pattern_task.search(line)
+            if match_task:
+                result.append(self._make_json_task(match_task))
+                result[-1]['line_number'] = line_number
+            elif pattern_description.match(line): # if description
+                result[-1] = self._add_task_description(result[-1], line[1:])
+            else:
+                match_vars = pattern_vars.search(line)
+                if match_vars:
+                    self._add_template_variable(match_vars.group(1), match_vars.group(2))
                 else:
-                    match_vars = pattern_vars.search(line)
-                    if match_vars:
-                        self._add_template_variable(match_vars.group(1), match_vars.group(2))
+                    if pattern_json.match(line): # if json
+                        self.tmpl_json.update(self._validated_json_loads(line))
                     else:
-                        if pattern_json.match(line): # if json
-                            self.tmpl_json.update(self._validated_json_loads(line))
-                        else:
-                            result.append({'text':line})
+                        result.append({'text':line})
+            line_number += 1
         return result
 
 #####################################################################################
@@ -279,18 +291,12 @@ class TaskExtractor:
 
         if not self.dry_run:
             try:
-                full_url = self.jira_url + '/rest/api/2/issue'
-                jira_response = self._jira_request(full_url, json.dumps(self.jira_format(issue)))
-                issueID = json.load(jira_response)
+                jira_response = str(self.jira_connect.post('issue', json.dumps(self.jira_format(issue))))
+                issueID = json.loads(jira_response)
                 return issueID['key']
-            except URLError, e:
-                if hasattr(e, 'code'):
-                    if e.code == 403 or e.code == 401:
-                        error_message = "Your username and password are not accepted by Jira."
-                        raise TaskExtractorJiraValidationError(error_message)
-                    else:
-                        error_message = "ERROR: The task cannot be created: %s\nJira response: Error %s, %s" % (issue['summary'], e.code, e.read())
-                        raise TaskExtractorJiraCreationError(error_message)
+            except JiraConnectActionError, e:
+                error_message = "Can't create task in the line %s of your template.\nJIRA error: %s" % (issue['line_number'], e.message)
+                raise TaskExtractorJiraValidationError(error_message)
         else:
             return 'DRY-RUN-XXXX'
 
@@ -306,22 +312,21 @@ class TaskExtractor:
 
         if not self.dry_run:
             jira_link = {"type":{"name":link_type},"inwardIssue":{"key":inward_issue},"outwardIssue": {"key": outward_issue}}
-            full_url = self.jira_url + '/rest/api/2/issueLink'
-            return self._jira_request(full_url, json.dumps(jira_link))
+            return self._jira_request('issueLink', json.dumps(jira_link))
         else:
           return 'dry run'
 
 
     def update_issue_desc(self, issue_key, issue_desc):
         if not self.dry_run:
-            full_url = self.jira_url + '/rest/api/2/issue/' + issue_key
+            full_url = 'issue/' + issue_key
             jira_data = {'update':{'description':[{'set':issue_desc}]}}
             return self._jira_request(full_url, json.dumps(jira_data), 'PUT')
         else:
             return 'dry run'
 
 
-    def _jira_request(self, url, data, method = 'POST', headers = {'Content-Type': 'application/json'}):
+    def _jira_request(self, action, data, method = 'POST', headers = {'Content-Type': 'application/json'}):
         """Compose and make HTTP request to JIRA.
 
         url should be a string containing a valid URL.
@@ -329,13 +334,12 @@ class TaskExtractor:
         Supported method are POST (for creating and linking) and PUT (for updating).
         It expects also self.username and self.password to be set to perform basic HTTP authentication.
         """
-        request = Request(url, data, headers)
 
-        # basic HTTP authentication
-        base64string = base64.encodestring('%s:%s' % (self.username, self.password)).replace('\n', '')
-        request.add_header("Authorization", "Basic %s" % base64string)
-        request.get_method = lambda : method
-
-        return urlopen(request)
+        if method == 'POST':
+            return str(self.jira_connect.post(action, data))
+        elif method == 'GET':
+            return str(self.jira_connect.get(action))
+        elif method == 'PUT':
+            return str(self.jira_connect.put(action, data))
 
 

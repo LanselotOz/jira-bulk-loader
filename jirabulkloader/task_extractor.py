@@ -103,7 +103,6 @@ class TaskExtractor:
         Parse and convert the input_text to a list of tasks
         """
         result = []
-        input_text = input_text.lstrip('\n');
         line_number = 1
 
         pattern_task = re.compile('^(h5\.|h4\.|#[*#]?)\s+(.+)\s+\*(\w+)\*(?:\s+%(\d{4}-\d\d-\d\d)%)?(?:\s+({.+}))?(?:\s+\[(\w+)\])?')
@@ -128,7 +127,7 @@ class TaskExtractor:
                 else:
                     if pattern_json.match(line): # if json
                         self.tmpl_json.update(self._validated_json_loads(line))
-                    else:
+                    elif result:
                         result.append({'text':line})
             line_number += 1
         return result
@@ -260,7 +259,7 @@ class TaskExtractor:
         return (h5_task_key, h5_task_caption, h5_task_desc)
 
     def _create_h4_task_and_return_key_caption(self, h4_task_json):
-        h4_task_json['issuetype'] = 'Epic Story'
+        h4_task_json['issuetype'] = 'User Story'
         h4_task_key = self.create_issue(h4_task_json)
         for key in self.h5_tasks_to_link_to_h4_task:
             self.create_link(h4_task_key, key)

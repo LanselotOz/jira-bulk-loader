@@ -48,61 +48,49 @@ h5. h5 task *assignee*
 =line1 description
 =line2 description
 """
-    excpected_result = [{'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}, \
-        {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}, \
-        {'assignee': 'assignee', 'markup': '#', 'description': 'line1 description\nline2 description', 'summary': 'sub-task'}]
+    excpected_result = [{'assignee': 'assignee', 'markup': 'h4.', \
+        'description': 'h4 task description', 'summary': 'h4 task', 'line_number': 2},
+        {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'line_number': 4}, \
+        {'assignee': 'assignee', 'markup': '#', \
+        'description': 'line1 description\nline2 description', 'summary': 'sub-task', 'line_number': 5}]
     self.assertEquals(excpected_result, self.te.load(input_text))
 
   def test_load_Text_h4_and_h5_with_empty_line(self):
     input_text = "\n\nh4. h4 task *assignee*\n\nh5. h5 task *assignee*"
-    excpected_result = [{'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'}, \
-        {'text':''}, {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}]
+    excpected_result = [{'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task', 'line_number': 3}, \
+            {'text':''}, {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'line_number': 5}]
     self.assertEquals(excpected_result, self.te.load(input_text))
 
   def test_load_Text_h5_and_sub_task_with_empty_line(self):
     input_text = "h5. h5 task *assignee*\n\n#* Sub-task 1 *assignee*\n\n#* Sub-task 2 *assignee*"
-    excpected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}, {'text':''}, \
-        {'assignee': 'assignee', 'markup': '#*', 'summary': 'Sub-task 1'}, {'text':''}, \
-        {'assignee': 'assignee', 'markup': '#*', 'summary': 'Sub-task 2'}]
+    excpected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'line_number': 1}, \
+            {'text':''}, \
+            {'assignee': 'assignee', 'markup': '#*', 'summary': 'Sub-task 1', 'line_number': 3}, {'text':''}, \
+            {'assignee': 'assignee', 'markup': '#*', 'summary': 'Sub-task 2', 'line_number': 5}]
     self.assertEquals(excpected_result, self.te.load(input_text))
 
   def test_load_Check_dueDate(self):
     input_text = "h5. h5 task *assignee* %2012-04-01%\n=line1 description"
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description':'line1 description', 'duedate':'2012-04-01'}]
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', \
+            'line_number': 1, 'description':'line1 description', 'duedate':'2012-04-01'}]
     self.assertEquals(expected_result, self.te.load(input_text))
 
   def test_load_Recognize_template_variables(self):
-    input_text = """
-[VAR1=1]
-[VAR2=2]
-h5. h5 task *assignee* %2012-04-01%
-=line1 description
-"""
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description':'line1 description', 'duedate':'2012-04-01'}]
+    input_text = "[VAR1=1]\n[VAR2=2]\nh5. h5 task *assignee* %2012-04-01%\n=line1 description"
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', \
+            'line_number': 3, 'description':'line1 description', 'duedate':'2012-04-01'}]
     self.assertEquals(expected_result, self.te.load(input_text))
     self.assertEquals({'VAR1':'1', 'VAR2':'2'}, self.te.tmpl_vars)
 
   def test_load_Text_replacement(self):
-    input_text = """
-[VAR1=h5.]
-[VAR2= h5 task]
-$VAR1$VAR2 *assignee* 
-"""
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}]
+    input_text = "[VAR1=h5.]\n[VAR2= h5 task]\n$VAR1$VAR2 *assignee*"
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'line_number': 3}]
     self.assertEquals(expected_result, self.te.load(input_text))
 
   def test_load_Variable_with_similar_name(self):
-    input_text1 = """
-[VAR=h5.]
-[VAR_VAR= task]
-h5. $VAR_VAR$VAR_VAR *assignee* 
-"""
-    input_text2 = """
-[VAR_VAR= task]
-[VAR=h5.]
-$VAR $VAR_VAR$VAR_VAR *assignee* 
-"""
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'task task'}]
+    input_text1 = "[VAR=h5.]\n[VAR_VAR= task]\nh5. $VAR_VAR$VAR_VAR *assignee*"
+    input_text2 = "[VAR_VAR= task]\n[VAR=h5.]\n$VAR $VAR_VAR$VAR_VAR *assignee*"
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'line_number': 3, 'summary': 'task task'}]
     self.assertEquals(expected_result, self.te.load(input_text1))
     self.assertEquals(expected_result, self.te.load(input_text2))
 
@@ -118,7 +106,8 @@ $VAR $VAR_VAR$VAR_VAR *assignee*
 
   def test_load_json(self):
     input_text = '{"item1":{"name":"test"}}\nh5. h5 task *assignee*'
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'tmpl_ext':{'item1':{'name':'test'}}}]
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', \
+            'line_number': 2, 'tmpl_ext':{'item1':{'name':'test'}}}]
     self.assertEquals(expected_result, self.te.load(input_text))
 
   def test_load_json_if_it_is_not_valid(self):
@@ -127,19 +116,23 @@ $VAR $VAR_VAR$VAR_VAR *assignee*
 
   def test_load_Check_dueDate_and_JSON_in_one_line(self):
     input_text = 'h5. h5 task1 *assignee* %2012-04-01% {"item2":"test2"}\nh5. h5 task2 *assignee*'
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task1', 'duedate':'2012-04-01', 'tmpl_ext':{"item2":"test2"}}, \
-        {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task2'}]
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task1', \
+            'duedate':'2012-04-01', 'tmpl_ext':{"item2":"test2"}, 'line_number': 1}, \
+            {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task2', 'line_number': 2}]
     self.assertEquals(expected_result, self.te.load(input_text))
 
   def test_load_Check_JSON_inline(self):
     input_text = '{"item1":{"name":"test"}}\nh5. h5 task *assignee* {"item2":"test2"}'
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'tmpl_ext':{"item1":{"name":"test"}, "item2":"test2"}}]
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', \
+            'line_number': 2, 'tmpl_ext':{"item1":{"name":"test"}, "item2":"test2"}}]
     self.assertEquals(expected_result, self.te.load(input_text))
 
   def test_load_Check_JSON_inline_replacement(self):
     input_text = '{"item1":{"name":"test"}}\n{"item2":"test2"}\nh5. h5 task *assignee* {"item1":"test1"}\n#* Sub-task 1 *assignee*'
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'tmpl_ext':{"item1":"test1","item2":"test2"}}, \
-            {'assignee': 'assignee', 'markup': '#*', 'summary': 'Sub-task 1', 'tmpl_ext':{"item1":{"name":"test"},"item2":"test2"}}]
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', \
+            'line_number': 3, 'tmpl_ext':{"item1":"test1", "item2":"test2"}}, \
+            {'assignee': 'assignee', 'markup': '#*', 'summary': 'Sub-task 1', \
+            'line_number': 4, 'tmpl_ext':{"item1":{"name":"test"}, "item2":"test2"}}]
     self.assertEquals(expected_result, self.te.load(input_text))
 
 
@@ -150,7 +143,7 @@ $VAR $VAR_VAR$VAR_VAR *assignee*
     self.te.create_issue = MagicMock()
     self.te.create_issue.return_value = 'DRY-RUN-XXXX'
     input_list = [{'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}]
-    expected_result = {'issuetype': 'Epic Story', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}
+    expected_result = {'issuetype': 'User Story', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'}
     expected_output = 'h4. h4 task (DRY-RUN-XXXX)'
     self.assertEquals(self.te.create_tasks(input_list), expected_output)
     self.te.create_issue.assert_called_once_with(expected_result)
@@ -176,7 +169,7 @@ $VAR $VAR_VAR$VAR_VAR *assignee*
     expected_result = [call({'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'description': 'h5 task description', 'summary': 'h5 task'}),
         call({'description': 'line1 description\nline2 description', 'parent': 'DRY-RUN-XXXX', 'markup': '#', 'summary': 'sub-task', 'assignee': 'assignee', \
             'issuetype': 'Sub-task'}),
-        call({'issuetype': 'Epic Story', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'})]
+        call({'issuetype': 'User Story', 'assignee': 'assignee', 'markup': 'h4.', 'description': 'h4 task description', 'summary': 'h4 task'})]
     self.te.create_tasks(input_list)
     self.assertEquals(self.te.create_issue.call_args_list, expected_result)
     MagicMock.assert_called_once_with(self.te.update_issue_desc, 'DRY-RUN-XXXX', 'h5 task description\n# sub-task (DRY-RUN-XXXX)')
@@ -190,7 +183,7 @@ $VAR $VAR_VAR$VAR_VAR *assignee*
       {'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task'}]
     expected_result = [call({'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task'}),
         call({'parent': 'DRY-RUN-XXXX', 'markup': '#', 'summary': 'sub-task', 'assignee': 'assignee', 'issuetype': 'Sub-task'}),
-        call({'issuetype': 'Epic Story', 'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'})]
+        call({'issuetype': 'User Story', 'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task'})]
     expected_output = 'h4. h4 task (DRY-RUN-XXXX)\nh5. h5 task (DRY-RUN-XXXX)\n# sub-task (DRY-RUN-XXXX)'
     self.assertEquals(self.te.create_tasks(input_list), expected_output)
     self.assertEquals(self.te.create_issue.call_args_list, expected_result)
@@ -248,12 +241,9 @@ $VAR $VAR_VAR$VAR_VAR *assignee*
 ### run-time variables
 
   def test_load_recognize_run_time_variables(self):
-    input_text = """
-[VAR1=1]
-h5. h5 task *assignee* [TASK_KEY]
-=line1 description
-"""
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'description':'line1 description', 'rt_ext':'TASK_KEY'}]
+    input_text = "[VAR1=1]\nh5. h5 task *assignee* [TASK_KEY]\n=line1 description"
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', \
+            'line_number': 2, 'description':'line1 description', 'rt_ext':'TASK_KEY'}]
     self.assertEquals(expected_result, self.te.load(input_text))
     self.assertEquals({'VAR1':'1'}, self.te.tmpl_vars)
 
@@ -279,10 +269,10 @@ h5. h5 task3 *assignee*
     self.te._create_issue_http.return_value = test_issue_id
     self.te.update_issue_desc = MagicMock()
 
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task1', 'rt_ext':'TASK_KEY1'},
-            {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task2', 'rt_ext':'TASK_KEY2'},
-        {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task3', 'description':'description $TASK_KEY1'},
-        {'assignee': 'assignee', 'markup': '#', 'summary': 'Sub-task', 'description':'description $TASK_KEY2'}]
+    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task1', 'rt_ext':'TASK_KEY1', 'line_number': 2},
+            {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task2', 'rt_ext':'TASK_KEY2', 'line_number': 3},
+            {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task3', 'description':'description $TASK_KEY1', 'line_number': 4},
+            {'assignee': 'assignee', 'markup': '#', 'summary': 'Sub-task', 'description':'description $TASK_KEY2', 'line_number': 6}]
     load_result = self.te.load(input_text)
     self.assertEquals(expected_result, load_result)
 

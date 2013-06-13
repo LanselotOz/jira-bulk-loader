@@ -210,21 +210,21 @@ class TaskExtractor:
                     if 'h5_task_key' in vars():
                         sub_task_caption = self._create_sub_task_and_return_caption(line, h5_task_key)
                         h5_task_ext = '\n'.join([h5_task_ext, sub_task_caption]) if h5_task_ext else sub_task_caption
+                    elif 'h4_task_key' in vars():
+                        sub_task_caption = self._create_sub_task_and_return_caption(line, h4_task_key)
+                        summary = "%s\n%s" % (summary, sub_task_caption) if summary else sub_task_caption
                     else:
                         sub_task_caption = self._create_sub_task_and_return_caption(line)
-                        summary = ('\n'.join([sub_task_caption, summary]) if summary else sub_task_caption)
+                        summary = "%s\n%s" % (summary, sub_task_caption) if summary else sub_task_caption
                 elif line['markup'] == 'h4.':
-                    h4_task = line
+                    h4_task_key, h4_task_caption = self._create_h4_task_and_return_key_caption(line)
+                    summary = ('\n'.join([h4_task_caption, summary]) if summary else h4_task_caption)
             elif 'text' in line:
                 h5_task_ext = '\n'.join([h5_task_ext, line['text']]) if h5_task_ext else line['text']
 
         if 'h5_task_key' in vars():
             h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
             summary = '\n'.join([summary, h5_summary_list]) if summary else h5_summary_list
-
-        if 'h4_task' in vars():
-            h4_task_key, h4_task_caption = self._create_h4_task_and_return_key_caption(h4_task)
-            summary = ('\n'.join([h4_task_caption, summary]) if summary else h4_task_caption)
 
         return summary
 

@@ -53,7 +53,7 @@ class JiraConnect:
             raise JiraConnectConnectionError(unicode(e.message) + ': ' + url)
         if r.status_code not in self.jira_ok_codes:
             raise JiraConnectActionError(url, r.status_code, r.text, r.headers)
-        return unicode(r.text)
+        return str(r.text)
 
 class JiraConnectConnectionError(RuntimeError):
     """There was an exception that occurred while handling a request"""

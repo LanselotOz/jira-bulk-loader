@@ -290,7 +290,7 @@ class TaskExtractor:
 
         if not self.dry_run:
             try:
-                jira_response = str(self.jira_connect.post('issue', json.dumps(self.jira_format(issue))))
+                jira_response = self.jira_connect.post('issue', json.dumps(self.jira_format(issue)))
                 issueID = json.loads(jira_response)
                 return issueID['key']
             except JiraConnectActionError, e:
@@ -335,10 +335,10 @@ class TaskExtractor:
         """
 
         if method == 'POST':
-            return str(self.jira_connect.post(action, data))
+            return self.jira_connect.post(action, data)
         elif method == 'GET':
-            return str(self.jira_connect.get(action))
+            return self.jira_connect.get(action)
         elif method == 'PUT':
-            return str(self.jira_connect.put(action, data))
+            return self.jira_connect.put(action, data)
 
 

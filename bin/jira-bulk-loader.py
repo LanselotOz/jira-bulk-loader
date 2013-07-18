@@ -4,16 +4,16 @@
 import argparse
 from jirabulkloader.task_extractor import TaskExtractor
 from jirabulkloader.task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorJiraValidationError, TaskExtractorTemplateErrorJson, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem
-from requests.exceptions import ConnectionError
+from jirabulkloader.jiraConnect import JiraConnectConnectionError
 
-prg_description="""Uses template file to create many tasks in Jira at once"""
+prg_description="Uses template file to create many tasks in Jira at once"
 
 prg_epilog="""Report bugs to: <https://bitbucket.org/oktopuz/jira-bulk-loader/issues>
 Project home page: <https://bitbucket.org/oktopuz/jira-bulk-loader>"""
 
 parser = argparse.ArgumentParser(description=prg_description, formatter_class=argparse.RawDescriptionHelpFormatter, epilog=prg_epilog)
 
-parser.add_argument('template_file', type=argparse.FileType('rU'), help='file containing tasks definition')
+parser.add_argument('template_file', help='file containing tasks definition')
 parser.add_argument('-W', dest='project', help='Project key')
 parser.add_argument('-R', dest='priority', help='Task priority. "Medium" by default', default="Medium")
 parser.add_argument('-D', dest='dueDate', help='dueDate  (YYYY-mm-DD). For example: 2012-05-31')
@@ -30,7 +30,15 @@ args = parser.parse_args()
 ##############################################################
 # open input file, parse and create tasks
 
-input_text = args.template_file.read()
+import codecs
+try:
+    f = codecs.open(args.template_file, encoding='utf-8')
+    input_text = f.read()
+except IOError as e:
+    print "Template file error: %s" % e
+    exit(1)
+else:
+    f.close()
 
 options = {}
 if args.dueDate: options['duedate'] = args.dueDate
@@ -49,7 +57,7 @@ try:
     print "Creating tasks.."
     breakdown = task_ext.create_tasks(tasks)
 
-except (TaskExtractorTemplateErrorProject, TaskExtractorJiraValidationError, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem) as e:
+except (TaskExtractorTemplateErrorProject, TaskExtractorJiraValidationError, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem, JiraConnectConnectionError) as e:
     print e.message
     exit(1)
 except TaskExtractorTemplateErrorJson, e:

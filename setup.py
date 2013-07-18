@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='jira-bulk-loader',
-    version='0.1.4',
+    version='0.1.5',
     packages=['jirabulkloader','jirabulkloader.test',],
     author='Alexander Dudko',
     author_email='alex.dudko@gmail.com',
@@ -12,8 +12,8 @@ setup(
     description='An automation tool for creating tasks in Jira via RESTful API',
     long_description=open('README.rst').read(),
     install_requires=[
-        "simplejson >= 2.6.1",
-        "requests >= 0.14.0",
+        "simplejson >= 3.3.0",
+        "requests >= 1.2.3",
         "argparse >= 1.2.1",
     ],
     classifiers=[

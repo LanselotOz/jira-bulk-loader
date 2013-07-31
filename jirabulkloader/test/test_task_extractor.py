@@ -39,24 +39,6 @@ class TestTaskExtractor(unittest.TestCase):
 ##########################################################
 ### load
 
-  def test_load_Using_simple_text(self):
-    input_text = """
-h4. h4 task *assignee*
-=h4 task description
-# sub-task1 *assignee*
-h5. h5 task *assignee*
-# sub-task2 *assignee*
-=line1 description
-=line2 description
-"""
-    excpected_result = [{'assignee': 'assignee', 'markup': 'h4.', \
-        'description': 'h4 task description', 'summary': 'h4 task', 'line_number': 2}, \
-        {'assignee': 'assignee', 'markup': '#', 'summary': 'sub-task1', 'line_number': 4}, \
-        {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'line_number': 5}, \
-        {'assignee': 'assignee', 'markup': '#', \
-        'description': 'line1 description\nline2 description', 'summary': 'sub-task2', 'line_number': 6}]
-    self.assertEquals(excpected_result, self.te.load(input_text))
-
   def test_load_Text_h4_and_h5_with_empty_line(self):
     input_text = "\n\nh4. h4 task *assignee*\n\nh5. h5 task *assignee*"
     excpected_result = [{'assignee': 'assignee', 'markup': 'h4.', 'summary': 'h4 task', 'line_number': 3}, \

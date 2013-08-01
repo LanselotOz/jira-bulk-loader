@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='jira-bulk-loader',
-    version='0.1.6',
+    version='0.1.7',
     packages=['jirabulkloader','jirabulkloader.test',],
     author='Alexander Dudko',
     author_email='alex.dudko@gmail.com',
@@ -13,7 +13,7 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         "simplejson >= 3.3.0",
-        "requests >= 1.2.3",
+        "requests >= 0.13.1",
         "argparse >= 1.2.1",
         "pytest >= 2.3.5",
     ],

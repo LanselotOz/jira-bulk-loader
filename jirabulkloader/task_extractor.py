@@ -64,7 +64,7 @@ class TaskExtractor:
         http://docs.atlassian.com/jira/REST/latest/#id120417
         """
 
-        full_url = "user/assignable/search?username=%s&project=%s" % (user, project)
+        full_url = "user/assignable/search?username={0}&project={1}".format(user, project)
         try:
             self.jira_connect.get('user/assignable/search', username=user, project=project)
         except JiraConnectActionError, e:
@@ -212,10 +212,10 @@ class TaskExtractor:
                         h5_task_ext = '\n'.join([h5_task_ext, sub_task_caption]) if h5_task_ext else sub_task_caption
                     elif 'h4_task_key' in vars():
                         sub_task_caption = self._create_sub_task_and_return_caption(line, h4_task_key)
-                        summary = "%s\n%s" % (summary, sub_task_caption) if summary else sub_task_caption
+                        summary = "{0}\n{1}".format(summary, sub_task_caption) if summary else sub_task_caption
                     else:
                         sub_task_caption = self._create_sub_task_and_return_caption(line)
-                        summary = "%s\n%s" % (summary, sub_task_caption) if summary else sub_task_caption
+                        summary = "{0}\n{1}".format(summary, sub_task_caption) if summary else sub_task_caption
                 elif line['markup'] == 'h4.':
                     h4_task_key, h4_task_caption = self._create_h4_task_and_return_key_caption(line)
                     summary = ('\n'.join([h4_task_caption, summary]) if summary else h4_task_caption)
@@ -292,7 +292,7 @@ class TaskExtractor:
                 issueID = json.loads(jira_response)
                 return issueID['key']
             except JiraConnectActionError, e:
-                error_message = "Can't create task in the line %s of your template.\nJIRA error: %s" % (issue['line_number'], e.message)
+                error_message = "Can't create task in the line {0} of your template.\nJIRA error: {1}".format(issue['line_number'], e.message)
                 raise TaskExtractorJiraValidationError(error_message)
         else:
             return 'DRY-RUN-XXXX'

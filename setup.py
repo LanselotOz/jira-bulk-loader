@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='jira-bulk-loader',
-    version='0.1.7',
+    version='0.1.9',
     packages=['jirabulkloader','jirabulkloader.test',],
     author='Alexander Dudko',
     author_email='alex.dudko@gmail.com',

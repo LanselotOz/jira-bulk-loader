@@ -13,11 +13,11 @@ except IOError as e:
     exit(1)
 
 options = {}
-if args.dueDate: options['duedate'] = args.dueDate
-if args.priority: options['priority'] = {'name':args.priority}
-if args.project: options['project'] = {'key':args.project}
+if args.duedate is not None: options['duedate'] = args.duedate
+if args.priority is not None: options['priority'] = {'name':args.priority}
+if args.project is not None: options['project'] = {'key':args.project}
 
-task_ext = TaskExtractor(args.hostname, args.username, args.password, options, dry_run = args.dry_run)
+task_ext = TaskExtractor(args.host, args.user, args.password, options, dry_run = args.dry_run)
 
 from jirabulkloader.task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorJiraValidationError, TaskExtractorTemplateErrorJson, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem
 from jirabulkloader.jiraConnect import JiraConnectConnectionError

@@ -33,8 +33,13 @@ def get_template( template_filename ):
     If there is no such file, IOError exception will be raised."""
 
     import io
+    import codecs
 
     with io.open( template_filename, 'rt', encoding='utf-8' ) as f:
-        return f.read()
+        tmpl = f.read()
+        if tmpl[0] == unicode( codecs.BOM_UTF8, 'utf8' ):
+            return tmpl[1:]
+        else:
+            return tmpl
 
 

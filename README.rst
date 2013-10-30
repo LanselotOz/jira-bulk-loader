@@ -132,7 +132,7 @@ Task parameters
 
 It is possible to define task attributes in template:
 
-    |	{"project":{"key":"PRKEY"}
+    |	{"project":{"key":"PRKEY"}}
     |	{"priority": {"name": "High"}}
     |	{"duedate": "2012-09-20"}
     |	{"components": [{"name": "Production"}]}

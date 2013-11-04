@@ -40,7 +40,10 @@ except TaskExtractorTemplateErrorJson, e:
     print "A correct JSON structure expected."
     exit(1)
 
-print '===  The following structure will be created ===' + '\n\n' + breakdown
+print '===  The following structure will be created ===\n\n'
+
+import sys
+print breakdown.encode(sys.stdout.encoding, 'ignore')
 
 print "\nDone."
 

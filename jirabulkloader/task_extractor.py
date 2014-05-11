@@ -104,35 +104,59 @@ class TaskExtractor:
         result = []
         line_number = 1
 
-        pattern_task = re.compile('^(h5\.|h4\.|#[*#]?)\s+(.+)\s+\*(\w+)\*(?:\s+%(\d{4}-\d\d-\d\d)%)?(?:\s+({.+}))?(?:\s+\[(\w+)\])?')
+        pattern_task = re.compile('^(h5\.|h4\.|#[*#]?|\(-\))\s+(.+)\s+\*([_\-A-z]+)\*(?:\s+%(\d{4}-\d\d-\d\d)%)?(?:\s+({.+}))?(?:\s+\[(\w+)\])?')
         pattern_description = re.compile('=')
         pattern_vars = re.compile('^\[(\w+)=(.+)\]$')
         pattern_json = re.compile('^{.+}$')
+        pattern_existing_task = re.compile('^\.\.\s([A-Z].+\-\d.+)$')
 
         for line in input_text.splitlines():
             if self.tmpl_vars:
                 line = self._replace_template_vars(line)
             line = line.rstrip()
-            match_task = pattern_task.search(line)
-            if match_task:
-                result.append(self._make_json_task(match_task))
-                result[-1]['line_number'] = line_number
-            elif pattern_description.match(line): # if description
+            if line.startswith(('h', '#', '(')):
+                match_task = pattern_task.search(line)
+                if match_task:
+                    result.append(self._make_json_task(match_task))
+                    result[-1]['line_number'] = line_number
+                    line_number += 1
+                    continue
+
+            if pattern_description.match(line): # if description
                 result[-1] = self._add_task_description(result[-1], line[1:])
-            else:
+                line_number += 1
+                continue
+
+            if line.startswith('.'):
+                match = pattern_existing_task.search(line)
+                if match:
+                    result.append(self._make_existing_task(match))
+                    result[-1]['line_number'] = line_number
+                    line_number += 1
+                    continue
+
+            if line.startswith(('[','{')):
                 match_vars = pattern_vars.search(line)
                 if match_vars:
                     self._add_template_variable(match_vars.group(1), match_vars.group(2))
                 else:
                     if pattern_json.match(line): # if json
                         self.tmpl_json.update(self._validated_json_loads(line))
-                    elif result:
-                        result.append({'text':line})
+                line_number += 1
+                continue
+
+            if result:
+                result.append({'text':line})
             line_number += 1
+
         return result
 
 #####################################################################################
 # several helpers for load()
+
+    def _make_existing_task(self, match):
+        task_json = {'markup': '..', 'issue_key':match.group(1),}
+        return task_json
 
     def _make_json_task(self, match):
         task_json = {'markup':match.group(1), 'summary':match.group(2), 'assignee':match.group(3)}
@@ -206,7 +230,14 @@ class TaskExtractor:
                         h5_task_ext = u''
                     h4_link = h4_task_key if 'h4_task_key' in vars() else None
                     h5_task_key, h5_task_caption, h5_task_desc = self._create_h5_task_and_return_key_caption_description(line, h4_link)
-                elif line['markup'][0] == '#':
+                elif line['markup'] == '..':
+                    if 'h5_task_key' in vars(): # if new h5 task begins
+                        h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
+                        summary = u'\n'.join([summary, h5_summary_list]) if summary else h5_summary_list
+                        h5_task_ext = u''
+                    h4_link = h4_task_key if 'h4_task_key' in vars() else None
+                    h5_task_key, h5_task_caption, h5_task_desc = self._attach_existing_h5_task_and_return_key_caption_description(line, h4_link)
+                elif line['markup'][0] == '#' or line['markup'] == '(-)':
                     if 'h5_task_key' in vars():
                         sub_task_caption = self._create_sub_task_and_return_caption(line, h5_task_key)
                         h5_task_ext = u'\n'.join([h5_task_ext, sub_task_caption]) if h5_task_ext else sub_task_caption
@@ -258,6 +289,14 @@ class TaskExtractor:
         h5_task_desc = h5_task_json['description'] if 'description' in h5_task_json else None
         return (h5_task_key, h5_task_caption, h5_task_desc)
 
+    def _attach_existing_h5_task_and_return_key_caption_description(self, h5_task_json, h4_link):
+        h5_task_json['issuetype'] = u'Task'
+        h5_task_key = h5_task_json['issue_key']
+        if h4_link is not None: self.create_link(h4_link, h5_task_key)
+        h5_task_caption = u'.. ' + h5_task_json['issue_key']
+        h5_task_desc = None
+        return (h5_task_key, h5_task_caption, h5_task_desc)
+
     def _create_h4_task_and_return_key_caption(self, h4_task_json):
         h4_task_json['issuetype'] = u'User Story'
         h4_task_key = self.create_issue(h4_task_json)
@@ -295,7 +334,7 @@ class TaskExtractor:
                 error_message = "Can't create task in the line {0} of your template.\nJIRA error: {1}".format(issue['line_number'], e.message)
                 raise TaskExtractorJiraValidationError(error_message)
         else:
-            return 'DRY-RUN-XXXX'
+            return 'DRYRUN-1234'
 
 
     def create_link(self, inward_issue, outward_issue, link_type = 'Inclusion'):

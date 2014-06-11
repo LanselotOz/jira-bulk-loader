@@ -33,7 +33,7 @@ def std_te_input():
     # h5.2 sub-task *assignee*
     =h5.2 sub-task desc line1
     =h5.2 sub-task desc line2
-    .. DRYRUN-1234
+    ... DRYRUN-1234
     # sub-task *assignee_p*
     """ )
 
@@ -49,7 +49,7 @@ def std_te_tasks():
             {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5.2 task', 'line_number': 10, 'description': 'h5.2 task desc'}, \
             {'assignee': 'assignee', 'markup': '#', 'description': 'h5.2 sub-task desc line1\nh5.2 sub-task desc line2', \
             'summary': 'h5.2 sub-task', 'line_number': 12}, \
-            {'markup': '..', 'issue_key': 'DRYRUN-1234', 'line_number': 15}, \
+            {'markup': '...', 'issue_key': 'DRYRUN-1234', 'line_number': 15}, \
             {'assignee': 'assignee_p', 'markup': '#', 'summary': 'sub-task', 'line_number': 16},
             ]
 

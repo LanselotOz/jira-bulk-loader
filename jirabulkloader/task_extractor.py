@@ -108,7 +108,7 @@ class TaskExtractor:
         pattern_description = re.compile('=')
         pattern_vars = re.compile('^\[(\w+)=(.+)\]$')
         pattern_json = re.compile('^{.+}$')
-        pattern_existing_task = re.compile('^\.\.\s([A-Z].+\-\d.+)$')
+        pattern_existing_task = re.compile('^(\.{2,3})\s([A-Z].+\-\d.+)$')
 
         for line in input_text.splitlines():
             if self.tmpl_vars:
@@ -155,7 +155,7 @@ class TaskExtractor:
 # several helpers for load()
 
     def _make_existing_task(self, match):
-        task_json = {'markup': '..', 'issue_key':match.group(1),}
+        task_json = {'markup': match.group(1), 'issue_key':match.group(2),}
         return task_json
 
     def _make_json_task(self, match):
@@ -230,7 +230,7 @@ class TaskExtractor:
                         h5_task_ext = u''
                     h4_link = h4_task_key if 'h4_task_key' in vars() else None
                     h5_task_key, h5_task_caption, h5_task_desc = self._create_h5_task_and_return_key_caption_description(line, h4_link)
-                elif line['markup'] == '..':
+                elif line['markup'] == '...':
                     if 'h5_task_key' in vars(): # if new h5 task begins
                         h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
                         summary = u'\n'.join([summary, h5_summary_list]) if summary else h5_summary_list
@@ -250,6 +250,10 @@ class TaskExtractor:
                 elif line['markup'] == 'h4.':
                     h4_task_key, h4_task_caption = self._create_h4_task_and_return_key_caption(line)
                     summary = (u'\n'.join([h4_task_caption, summary]) if summary else h4_task_caption)
+                elif line['markup']:
+                    h4_task_key = line['issue_key']
+                    task_summary = u'.. ' + line['issue_key']
+                    summary = (u'\n'.join([task_summary, summary]) if summary else task_summary)
             elif 'text' in line:
                 h5_task_ext = u'\n'.join([h5_task_ext, line['text']]) if h5_task_ext else line['text']
 
@@ -293,8 +297,8 @@ class TaskExtractor:
         h5_task_json['issuetype'] = u'Task'
         h5_task_key = h5_task_json['issue_key']
         if h4_link is not None: self.create_link(h4_link, h5_task_key)
-        h5_task_caption = u'.. ' + h5_task_json['issue_key']
-        h5_task_desc = None
+        h5_task_caption = u' '.join((h5_task_json['markup'], h5_task_json['issue_key']))
+        h5_task_desc = h5_task_json['description'] if 'description' in h5_task_json else  None
         return (h5_task_key, h5_task_caption, h5_task_desc)
 
     def _create_h4_task_and_return_key_caption(self, h4_task_json):

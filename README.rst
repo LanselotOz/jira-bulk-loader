@@ -114,6 +114,17 @@ In this case h5 tasks will be linked to h4 user story.
 
 
 
+Create sub-task of existing task or user story
+=============================================
+
+If you have a task in JIRA and want to create a sub-task for it, use the following syntax:
+
+    | ... JIRA-1234
+    |   # Sub-task summary \*assignee1\*
+    |   =description
+
+
+
 A short summary
 ===============
 
@@ -121,6 +132,8 @@ Let me summarize what are the possible markups to begin a line with:
 
 - a user story: h4. summary \*assignee\*
 - a task: h5. summary \*assignee\*
+- existing user story: .. JIRA-1234
+- existing task: ... JIRA-1234
 - a sub-task: # summary \*assignee\*  
 - one more sub-task: #* summary \*assignee\*
 - description: = 

@@ -216,54 +216,55 @@ class TaskExtractor:
         and compose created tasks summary.
         """
 
-        summary = u''
+        summary = []
+        args = {}
+        actions = {
+            'h4.': self._create_h4_task
+        }
         h5_task_ext = u''
 
         for line in task_list:
             if 'markup' in line:
-                if ('description' in line): 
+                if ('description' in line):
                     line['description'] = self._replace_realtime_vars(line['description'])
                 if line['markup'] == 'h5.':
                     if 'h5_task_key' in vars(): # if new h5 task begins
                         h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
-                        summary = u'\n'.join([summary, h5_summary_list]) if summary else h5_summary_list
+                        summary.append(h5_summary_list)
                         h5_task_ext = u''
-                    h4_link = h4_task_key if 'h4_task_key' in vars() else None
-                    h5_task_key, h5_task_caption, h5_task_desc = self._create_h5_task_and_return_key_caption_description(line, h4_link)
+                    h4_link = args.get('h4_task_key')
+                    h5_task_key, h5_task_caption, h5_task_desc = \
+                        self._create_h5_task_and_return_key_caption_description(line, h4_link)
                 elif line['markup'] == '...':
                     if 'h5_task_key' in vars(): # if new h5 task begins
                         h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
-                        summary = u'\n'.join([summary, h5_summary_list]) if summary else h5_summary_list
+                        summary.append(h5_summary_list)
                         h5_task_ext = u''
-                    h4_link = h4_task_key if 'h4_task_key' in vars() else None
+                    h4_link = args.get('h4_task_key')
                     h5_task_key, h5_task_caption, h5_task_desc = self._attach_existing_h5_task_and_return_key_caption_description(line, h4_link)
                 elif line['markup'][0] == '#' or line['markup'] == '(-)':
                     if 'h5_task_key' in vars():
                         sub_task_caption = self._create_sub_task_and_return_caption(line, h5_task_key)
                         h5_task_ext = u'\n'.join([h5_task_ext, sub_task_caption]) if h5_task_ext else sub_task_caption
-                    elif 'h4_task_key' in vars():
-                        sub_task_caption = self._create_sub_task_and_return_caption(line, h4_task_key)
-                        summary = u'{0}\n{1}'.format(summary, sub_task_caption) if summary else sub_task_caption
                     else:
-                        sub_task_caption = self._create_sub_task_and_return_caption(line)
-                        summary = u'{0}\n{1}'.format(summary, sub_task_caption) if summary else sub_task_caption
+                        sub_task_caption = self._create_sub_task_and_return_caption(line, args.get('h4_task_key'))
+                        summary.append(sub_task_caption)
                 elif line['markup'] == 'h4.':
-                    h4_task_key, h4_task_caption = self._create_h4_task_and_return_key_caption(line)
-                    summary = (u'\n'.join([h4_task_caption, summary]) if summary else h4_task_caption)
-                elif line['markup']:
-                    h4_task_key = line['issue_key']
+                    summary.append(actions[line['markup']](line, args))
+                elif line['markup'] == '..':
+                    args['h4_task_key'] = line['issue_key']
                     task_summary = u'.. ' + line['issue_key']
-                    summary = (u'\n'.join([task_summary, summary]) if summary else task_summary)
+                    summary.append(task_summary)
             elif 'text' in line:
                 h5_task_ext = u'\n'.join([h5_task_ext, line['text']]) if h5_task_ext else line['text']
 
         if 'h5_task_key' in vars():
             h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
-            summary = u'\n'.join([summary, h5_summary_list]) if summary else h5_summary_list
+            summary.append(h5_summary_list)
 
-        return summary
+        return '\n'.join(summary)#self._summary
 
-#####################################################################################
+# ###################################################################################
 # several helpers for create_tasks()
 
     def _make_task_caption(self, task_json, task_key):
@@ -301,13 +302,13 @@ class TaskExtractor:
         h5_task_desc = h5_task_json['description'] if 'description' in h5_task_json else  None
         return (h5_task_key, h5_task_caption, h5_task_desc)
 
-    def _create_h4_task_and_return_key_caption(self, h4_task_json):
+    def _create_h4_task(self, h4_task_json, args):
         h4_task_json['issuetype'] = u'User Story'
-        h4_task_key = self.create_issue(h4_task_json)
-        return (h4_task_key, self._make_task_caption(h4_task_json,  h4_task_key))
+        args['h4_task_key'] = self.create_issue(h4_task_json)
+        return self._make_task_caption(h4_task_json,  args['h4_task_key'])
 
 # end of create_tasks() helpers
-#####################################################################################
+# ###################################################################################
 
     def create_issue(self, issue):
         if ('description' in issue) and self.rt_vars:
@@ -344,7 +345,7 @@ class TaskExtractor:
     def create_link(self, inward_issue, outward_issue, link_type = 'Inclusion'):
         """Creates an issue link between two issues.
 
-        The specified link type in the request is used to create the link 
+        The specified link type in the request is used to create the link
         and will create a link from the first issue to the second issue using the outward description.
         The list of issue types can be retrieved using rest/api/2/issueLinkType
         For now possible types are Block, Duplicate, Gantt Dependency, Inclusion, Reference

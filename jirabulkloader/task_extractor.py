@@ -219,7 +219,8 @@ class TaskExtractor:
         summary = []
         args = {}
         actions = {
-            'h4.': self._create_h4_task
+            'h4.': self._create_h4_task,
+            '..': self._attach_h4_task
         }
         h5_task_ext = u''
 
@@ -232,16 +233,15 @@ class TaskExtractor:
                         h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
                         summary.append(h5_summary_list)
                         h5_task_ext = u''
-                    h4_link = args.get('h4_task_key')
                     h5_task_key, h5_task_caption, h5_task_desc = \
-                        self._create_h5_task_and_return_key_caption_description(line, h4_link)
+                        self._create_h5_task_and_return_key_caption_description(line, args.get('h4_task_key'))
                 elif line['markup'] == '...':
                     if 'h5_task_key' in vars(): # if new h5 task begins
                         h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
                         summary.append(h5_summary_list)
                         h5_task_ext = u''
-                    h4_link = args.get('h4_task_key')
-                    h5_task_key, h5_task_caption, h5_task_desc = self._attach_existing_h5_task_and_return_key_caption_description(line, h4_link)
+                    h5_task_key, h5_task_caption, h5_task_desc = \
+                        self._attach_existing_h5_task_and_return_key_caption_description(line, args.get('h4_task_key'))
                 elif line['markup'][0] == '#' or line['markup'] == '(-)':
                     if 'h5_task_key' in vars():
                         sub_task_caption = self._create_sub_task_and_return_caption(line, h5_task_key)
@@ -249,12 +249,8 @@ class TaskExtractor:
                     else:
                         sub_task_caption = self._create_sub_task_and_return_caption(line, args.get('h4_task_key'))
                         summary.append(sub_task_caption)
-                elif line['markup'] == 'h4.':
+                else:
                     summary.append(actions[line['markup']](line, args))
-                elif line['markup'] == '..':
-                    args['h4_task_key'] = line['issue_key']
-                    task_summary = u'.. ' + line['issue_key']
-                    summary.append(task_summary)
             elif 'text' in line:
                 h5_task_ext = u'\n'.join([h5_task_ext, line['text']]) if h5_task_ext else line['text']
 
@@ -306,6 +302,10 @@ class TaskExtractor:
         h4_task_json['issuetype'] = u'User Story'
         args['h4_task_key'] = self.create_issue(h4_task_json)
         return self._make_task_caption(h4_task_json,  args['h4_task_key'])
+
+    def _attach_h4_task(self, h4_task_json, args):
+        args['h4_task_key'] = line['issue_key']
+        return u'.. ' + line['issue_key']
 
 # end of create_tasks() helpers
 # ###################################################################################

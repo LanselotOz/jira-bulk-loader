@@ -298,14 +298,14 @@ class TaskExtractor:
         h5_task_desc = h5_task_json['description'] if 'description' in h5_task_json else  None
         return (h5_task_key, h5_task_caption, h5_task_desc)
 
-    def _create_h4_task(self, h4_task_json, args):
-        h4_task_json['issuetype'] = u'User Story'
-        args['h4_task_key'] = self.create_issue(h4_task_json)
-        return self._make_task_caption(h4_task_json,  args['h4_task_key'])
+    def _create_h4_task(self, task_json, args):
+        task_json['issuetype'] = u'User Story'
+        args['h4_task_key'] = self.create_issue(task_json)
+        return self._make_task_caption(task_json,  args['h4_task_key'])
 
-    def _attach_h4_task(self, h4_task_json, args):
-        args['h4_task_key'] = line['issue_key']
-        return u'.. ' + line['issue_key']
+    def _attach_h4_task(self, task_json, args):
+        args['h4_task_key'] = task_json['issue_key']
+        return u'.. ' + task_json['issue_key']
 
 # end of create_tasks() helpers
 # ###################################################################################

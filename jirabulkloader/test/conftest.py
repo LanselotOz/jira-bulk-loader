@@ -6,7 +6,7 @@ import pytest
 def te():
     """TaskExtractor instance"""
     from jirabulkloader.task_extractor import TaskExtractor
-    return TaskExtractor("http://jira.atlassian.com", "", "", dry_run = True)    
+    return TaskExtractor("http://jira.atlassian.com", "", "", dry_run=True)
 
 
 @pytest.fixture()

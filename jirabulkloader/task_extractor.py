@@ -1,8 +1,6 @@
-#-*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
 
 import re
-import base64
-from urllib2 import Request, urlopen, URLError
 import simplejson as json
 from task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorTemplateErrorJson, TaskExtractorJiraValidationError, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem
 from jiraConnect import JiraConnect, JiraConnectConnectionError, JiraConnectActionError
@@ -145,7 +143,7 @@ class TaskExtractor:
                 line_number += 1
                 continue
 
-            if result:
+            if len(result) > 0:
                 result.append({'text':line})
             line_number += 1
 
@@ -209,7 +207,6 @@ class TaskExtractor:
 
         return {'fields':fields}
 
-
     def create_tasks(self, task_list):
         """
         It takes the task_list prepared by load(), creates all tasks
@@ -222,41 +219,41 @@ class TaskExtractor:
             'h4.': self._create_h4_task,
             '..': self._attach_h4_task
         }
-        h5_task_ext = u''
 
         for line in task_list:
             if 'markup' in line:
                 if ('description' in line):
                     line['description'] = self._replace_realtime_vars(line['description'])
                 if line['markup'] == 'h5.':
-                    if 'h5_task_key' in vars(): # if new h5 task begins
-                        h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
-                        summary.append(h5_summary_list)
-                        h5_task_ext = u''
-                    h5_task_key, h5_task_caption, h5_task_desc = \
-                        self._create_h5_task_and_return_key_caption_description(line, args.get('h4_task_key'))
+                    if 'h5_task_key' in args: # if new h5 task begins
+                        h5_summary_list = self._h5_task_completion(args)
+                        if h5_summary_list:
+                            summary.append(h5_summary_list)
+                    summary.append(self._create_h5_task(line, args))
                 elif line['markup'] == '...':
-                    if 'h5_task_key' in vars(): # if new h5 task begins
-                        h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
-                        summary.append(h5_summary_list)
-                        h5_task_ext = u''
-                    h5_task_key, h5_task_caption, h5_task_desc = \
-                        self._attach_existing_h5_task_and_return_key_caption_description(line, args.get('h4_task_key'))
+                    if 'h5_task_key' in args:  # if new h5 task begins
+                        h5_summary_list = self._h5_task_completion(args)
+                        if h5_summary_list:
+                            summary.append(h5_summary_list)
+                    summary.append(self._attach_existing_h5_task(line, args))
+                    #h5_task_key, h5_task_caption, h5_task_desc = \
+                    #    self._attach_existing_h5_task_and_return_key_caption_description(line, args.get('h4_task_key'))
                 elif line['markup'][0] == '#' or line['markup'] == '(-)':
-                    if 'h5_task_key' in vars():
-                        sub_task_caption = self._create_sub_task_and_return_caption(line, h5_task_key)
-                        h5_task_ext = u'\n'.join([h5_task_ext, sub_task_caption]) if h5_task_ext else sub_task_caption
+                    if 'h5_task_key' in args:
+                        sub_task_caption = self._create_sub_task_and_return_caption(line, args.get('h5_task_key'))
+                        args['h5_task_desc'].append(sub_task_caption)
                     else:
                         sub_task_caption = self._create_sub_task_and_return_caption(line, args.get('h4_task_key'))
                         summary.append(sub_task_caption)
                 else:
                     summary.append(actions[line['markup']](line, args))
-            elif 'text' in line:
-                h5_task_ext = u'\n'.join([h5_task_ext, line['text']]) if h5_task_ext else line['text']
+            elif 'text' in line and 'h5_task_desc' in args:
+                args['h5_task_desc'].append(line['text'])
 
-        if 'h5_task_key' in vars():
-            h5_summary_list = self._h5_task_completion(h5_task_key, h5_task_caption, h5_task_desc, h5_task_ext)
-            summary.append(h5_summary_list)
+        if 'h5_task_key' in args:
+            h5_summary_list = self._h5_task_completion(args)
+            if h5_summary_list:
+                summary.append(h5_summary_list)
 
         return '\n'.join(summary)#self._summary
 
@@ -264,16 +261,20 @@ class TaskExtractor:
 # several helpers for create_tasks()
 
     def _make_task_caption(self, task_json, task_key):
-        return u' '.join([task_json['markup'], task_json['summary'], '(' + task_key + ')'])
+        return u' '.join([
+            task_json['markup'],
+            task_json['summary'], '(' + task_key + ')'])
 
-    def _h5_task_completion(self, key, caption, desc, ext):
-        summary_list = [caption]
-        if ext:
-            desc = u'\n'.join([desc, ext]) if desc else ext
-            self.update_issue_desc(key, self._replace_realtime_vars(desc))
-        if desc:
-            summary_list.append(desc)
-        return u'\n'.join(summary_list)
+    def _h5_task_completion(self, args):
+        desc = ''
+        len_args = len(args['h5_task_desc'])
+        if len_args > 0:
+            desc = self._replace_realtime_vars('\n'.join(args['h5_task_desc']))
+        if len_args > args['h5_task_desc_len']:
+            self.update_issue_desc(args.get('h5_task_key'), desc)
+        args.pop('h5_task_key', None)
+        args.pop('h5_task_desc', None)
+        return desc
 
     def _create_sub_task_and_return_caption(self, sub_task_json, parent_task_key = None):
         if parent_task_key:
@@ -282,21 +283,45 @@ class TaskExtractor:
         sub_task_key = self.create_issue(sub_task_json)
         return self._make_task_caption(sub_task_json,  sub_task_key)
 
-    def _create_h5_task_and_return_key_caption_description(self, h5_task_json, h4_link):
-        h5_task_json['issuetype'] = u'Task'
-        h5_task_key = self.create_issue(h5_task_json)
-        if h4_link is not None: self.create_link(h4_link, h5_task_key)
-        h5_task_caption = self._make_task_caption(h5_task_json,  h5_task_key)
-        h5_task_desc = h5_task_json['description'] if 'description' in h5_task_json else None
-        return (h5_task_key, h5_task_caption, h5_task_desc)
+#    def _create_h5_task_and_return_key_caption_description(self, h5_task_json, h4_link):
+#        h5_task_json['issuetype'] = u'Task'
+#        h5_task_key = self.create_issue(h5_task_json)
+#        if h4_link is not None: self.create_link(h4_link, h5_task_key)
+#        h5_task_caption = self._make_task_caption(h5_task_json,  h5_task_key)
+#        h5_task_desc = h5_task_json['description'] if 'description' in h5_task_json else None
+#        return (h5_task_key, h5_task_caption, h5_task_desc)
 
-    def _attach_existing_h5_task_and_return_key_caption_description(self, h5_task_json, h4_link):
-        h5_task_json['issuetype'] = u'Task'
-        h5_task_key = h5_task_json['issue_key']
-        if h4_link is not None: self.create_link(h4_link, h5_task_key)
-        h5_task_caption = u' '.join((h5_task_json['markup'], h5_task_json['issue_key']))
-        h5_task_desc = h5_task_json['description'] if 'description' in h5_task_json else  None
-        return (h5_task_key, h5_task_caption, h5_task_desc)
+    def _create_h5_task(self, task_json, args):
+        task_json['issuetype'] = u'Task'
+        key = self.create_issue(task_json)
+        args['h5_task_key'] = key
+        args['h5_task_desc'] = []
+        if 'description' in task_json:
+            args['h5_task_desc'].append(task_json['description'])
+        args['h5_task_desc_len'] = len(args['h5_task_desc'])
+        if args.get('h4_task_key') is not None:
+            self.create_link(args.get('h4_task_key'), key)
+        return self._make_task_caption(task_json, key)
+
+    def _attach_existing_h5_task(self, task_json, args):
+        task_json['issuetype'] = u'Task'
+        key = task_json['issue_key']
+        args['h5_task_key'] = key
+        if 'h4_task_key' in args:
+            self.create_link(args['h4_task_key'], key)
+        args['h5_task_desc'] = [task_json['description']] \
+            if 'description' in task_json else []
+        args['h5_task_desc_len'] = len(args['h5_task_desc'])
+        caption = u' '.join((task_json['markup'], key))
+        return caption
+
+#    def _attach_existing_h5_task_and_return_key_caption_description(self, h5_task_json, h4_link):
+#        h5_task_json['issuetype'] = u'Task'
+#        h5_task_key = h5_task_json['issue_key']
+#        if h4_link is not None: self.create_link(h4_link, h5_task_key)
+#        h5_task_caption = u' '.join((h5_task_json['markup'], h5_task_json['issue_key']))
+#        h5_task_desc = h5_task_json['description'] if 'description' in h5_task_json else  None
+#        return (h5_task_key, h5_task_caption, h5_task_desc)
 
     def _create_h4_task(self, task_json, args):
         task_json['issuetype'] = u'User Story'

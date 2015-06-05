@@ -175,6 +175,7 @@ Let me summarize what are the possible markups to begin a line with:
 - description: = 
 
 Every task definition can be followed by one or more inline auxiliary parameters:
+
 - %YYYY-MM-DD% - due date
 - <JIRA-1234> or <JIRA-1234|Inclusion> - link
 - {"components": [{"name": "Localizations"}]} - any json data that will be sent directly to JIRA API as a part of `create request <https://docs.atlassian.com/jira/REST/latest/#d2e4264>`_.

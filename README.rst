@@ -79,8 +79,19 @@ and the command:
 
 	jira-bulk-loader.py -U <your_username> -P <your_password> -H jira.your_domain.org -D 2012-09-20 -W PRKEY template_file
 
-It will create a task with two subtasks. Moreover it also sets due date 2012-09-18 (YYYY-mm-DD) to 2nd sub-task, and 2012-09-20 to the task and its first sub-task.
+It will create a task with two subtasks. Moreover it also sets due date 2012-09-18 (YYYY-mm-DD) to the 2nd sub-task, and 2012-09-20 to the task and its first sub-task.
 
+
+Link issues
+===========
+
+A task can be `linked <https://jira.wargaming.net/rest/api/2/issueLinkType>`_ to another task.
+
+    | h5. Task1 summary \*assignee\* <JIRA-1234>
+    | h5. Task2 summary \*assignee\* <JIRA-1234|Gantt-dependency>
+
+where 'Gantt-dependency' is a link type. If it is not specifyed, default value 'Inclusion' will be used.
+For the full list of possible link types see: https://<your-JIRA-URL>/rest/api/2/issueLinkType
 
 
 Dry run option
@@ -125,21 +136,6 @@ If you have a task in JIRA and want to create a sub-task for it, use the followi
 
 
 
-A short summary
-===============
-
-Let me summarize what are the possible markups to begin a line with:
-
-- a user story: h4. summary \*assignee\*
-- a task: h5. summary \*assignee\*
-- existing user story: .. JIRA-1234
-- existing task: ... JIRA-1234
-- a sub-task: # summary \*assignee\*  
-- one more sub-task: #* summary \*assignee\*
-- description: = 
-
-
-
 Task parameters
 ===============
 
@@ -159,9 +155,29 @@ It is possible to define task attributes in template:
     | 	h5. Third task summary \*assignee3\*
     |	=description
 
-It the example *project*, *priority* and *duedate* will be applied to both tasks by default. The *component* 'Production' will be applied to task 1 and 3. However, the second task will use the *component* 'Localizations'.
+In the example *project*, *priority* and *duedate* will be applied to all tasks by default. The *component* 'Production' will be applied to task 1 and 3. However, the second task will use the *component* 'Localizations'.
 
 `This part <http://docs.atlassian.com/jira/REST/latest/#id200060>`_ of Jira documentation could give a clue how to find out relevant parameters in your project and their format.
+
+
+
+A short summary
+===============
+
+Let me summarize what are the possible markups to begin a line with:
+
+- a user story: h4. summary \*assignee\*
+- a task: h5. summary \*assignee\*
+- existing user story: .. JIRA-1234
+- existing task: ... JIRA-1234
+- a sub-task: # summary \*assignee\*  
+- one more sub-task: #* summary \*assignee\*
+- description: = 
+
+Every task definition can be followed by one or more inline auxiliary parameters:
+- %YYYY-MM-DD% - due date
+- <JIRA-1234> or <JIRA-1234|Inclusion> - link
+- {"components": [{"name": "Localizations"}]} - any json data that will be sent directly to JIRA API as a part of `create request <https://docs.atlassian.com/jira/REST/latest/#d2e4264>`_.
 
 
 

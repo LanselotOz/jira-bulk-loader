@@ -216,26 +216,20 @@ class TaskExtractor:
         args = {}
         actions = {
             'h4.': self._create_h4_task,
-            '..': self._attach_h4_task
+            '..': self._attach_h4_task,
+            'h5.': self._create_h5_task,
+            '...': self._attach_existing_h5_task,
+            '(-)': self._create_sub_task,
+            '#': self._create_sub_task,
+            '#*': self._create_sub_task
         }
 
         for line in task_list:
             if 'markup' in line:
-                if ('description' in line):
+                if 'description' in line:
                     line['description'] = \
                         self._replace_realtime_vars(line['description'])
-                if line['markup'] == 'h5.':
-                    if 'h5_task_key' in args:  # if new h5 task begins
-                        self._h5_task_completion(args)
-                    summary.extend(self._create_h5_task(line, args))
-                elif line['markup'] == '...':
-                    if 'h5_task_key' in args:  # if new h5 task begins
-                        self._h5_task_completion(args)
-                    summary.extend(self._attach_existing_h5_task(line, args))
-                elif line['markup'][0] == '#' or line['markup'] == '(-)':
-                    summary.append(self._create_sub_task(line, args))
-                else:
-                    summary.extend(actions[line['markup']](line, args))
+                summary.extend(actions[line['markup']](line, args))
             elif 'text' in line:
                 summary.append(line['text'])
                 if 'h5_task_desc' in args:
@@ -273,9 +267,11 @@ class TaskExtractor:
         desc = self._make_task_caption(task_json, task_key)
         if 'h5_task_key' in args:
             args['h5_task_desc'].append(desc)
-        return desc
+        return [desc]
 
     def _create_h5_task(self, task_json, args):
+        if 'h5_task_key' in args:  # if new h5 task begins
+            self._h5_task_completion(args)
         task_json['issuetype'] = u'Task'
         key = self.create_issue(task_json)
         args['h5_task_key'] = key
@@ -290,6 +286,8 @@ class TaskExtractor:
         return desc
 
     def _attach_existing_h5_task(self, task_json, args):
+        if 'h5_task_key' in args:  # if new h5 task begins
+            self._h5_task_completion(args)
         task_json['issuetype'] = u'Task'
         key = task_json['issue_key']
         args['h5_task_key'] = key

@@ -92,8 +92,7 @@ class TaskExtractor:
 
 
 # end of load() helpers
-#####################################################################################
-
+###############################################################################
 
     def load(self, input_text):
         """
@@ -103,7 +102,6 @@ class TaskExtractor:
         line_number = 1
 
         pattern_task = re.compile('^(h5\.|h4\.|#[*#]?|\(-\))\s+(.+)\s+\*([_\-A-z]+)\*(?:\s+%(\d{4}-\d\d-\d\d)%)?(?:\s+({.+}))?(?:\s+\[(\w+)\])?')
-        pattern_description = re.compile('=')
         pattern_vars = re.compile('^\[(\w+)=(.+)\]$')
         pattern_json = re.compile('^{.+}$')
         pattern_existing_task = re.compile('^(\.{2,3})\s([A-Z].+\-\d.+)$')
@@ -120,7 +118,7 @@ class TaskExtractor:
                     line_number += 1
                     continue
 
-            if pattern_description.match(line): # if description
+            if line.startswith('='):  # if description
                 result[-1] = self._add_task_description(result[-1], line[1:])
                 line_number += 1
                 continue
@@ -133,23 +131,24 @@ class TaskExtractor:
                     line_number += 1
                     continue
 
-            if line.startswith(('[','{')):
+            if line.startswith(('[', '{')):
                 match_vars = pattern_vars.search(line)
                 if match_vars:
-                    self._add_template_variable(match_vars.group(1), match_vars.group(2))
+                    self._add_template_variable(
+                        match_vars.group(1), match_vars.group(2))
                 else:
-                    if pattern_json.match(line): # if json
+                    if pattern_json.match(line):  # if json
                         self.tmpl_json.update(self._validated_json_loads(line))
                 line_number += 1
                 continue
 
             if len(result) > 0:
-                result.append({'text':line})
+                result.append({'text': line})
             line_number += 1
 
         return result
 
-#####################################################################################
+###############################################################################
 # several helpers for load()
 
     def _make_existing_task(self, match):
@@ -191,7 +190,7 @@ class TaskExtractor:
         return result
 
 # end of load() helpers
-#####################################################################################
+###############################################################################
 
     def jira_format(self, task):
         fields = {}

@@ -2,16 +2,21 @@
 
 import re
 import simplejson as json
-from task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorTemplateErrorJson, TaskExtractorJiraValidationError, TaskExtractorJiraCreationError, TaskExtractorJiraHostProblem
-from jiraConnect import JiraConnect, JiraConnectConnectionError, JiraConnectActionError
+from task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorTemplateErrorJson, TaskExtractorJiraValidationError
+from jiraConnect import JiraConnect, JiraConnectActionError
 
 
 class TaskExtractor:
 
-    def __init__(self, jira_url, username, password, options = {}, dry_run = False):
-        self.tmpl_vars = {} # template variables dict
-        self.tmpl_json = {} # template json structures, for example {"project": {"key": "KEY"}}
-        self.rt_vars = {} # run-time variables (issueIDs)
+    def __init__(self,
+                 jira_url,
+                 username,
+                 password,
+                 options={},
+                 dry_run=False):
+        self.tmpl_vars = {}  # template variables dict
+        self.tmpl_json = {}  # template json structures such {"project": {"key": "KEY"}}
+        self.rt_vars = {}    # run-time variables (issueIDs)
 
         self.default_params = options
         self.dry_run = dry_run
@@ -101,7 +106,7 @@ class TaskExtractor:
         result = []
         line_number = 1
 
-        pattern_task = re.compile('^(h5\.|h4\.|#[*#]?|\(-\))\s+(.+)\s+\*([_\-A-z]+)\*(?:\s+%(\d{4}-\d\d-\d\d)%)?(?:\s+({.+}))?(?:\s+\[(\w+)\])?')
+        pattern_task = re.compile('^(h5\.|h4\.|#[*#]?|\(-\))\s+(.+)\s+\*([_\-A-z]+)\*(.*)')
         pattern_vars = re.compile('^\[(\w+)=(.+)\]$')
         pattern_json = re.compile('^{.+}$')
         pattern_existing_task = re.compile('^(\.{2,3})\s([A-Z].+\-\d.+)$')
@@ -152,27 +157,44 @@ class TaskExtractor:
 # several helpers for load()
 
     def _make_existing_task(self, match):
-        task_json = {'markup': match.group(1), 'issue_key':match.group(2),}
+        task_json = {'markup': match.group(1), 'issue_key': match.group(2)}
         return task_json
 
     def _make_json_task(self, match):
-        task_json = {'markup':match.group(1), 'summary':match.group(2), 'assignee':match.group(3)}
-        if match.group(4): task_json['duedate'] = match.group(4)
-        if not len(self.tmpl_json) == 0:
+        task_json = {'markup': match.group(1),
+                     'summary': match.group(2),
+                     'assignee': match.group(3)}
+        if len(self.tmpl_json) != 0:
             task_json['tmpl_ext'] = self.tmpl_json.copy()
-        if match.group(5):
-            task_json.setdefault('tmpl_ext', {}).update(self._validated_json_loads(match.group(5)))
-        if match.group(6):
-            task_json['rt_ext'] = match.group(6)
+        if match.group(4):
+            self._add_task_options(task_json, match.group(4))
+        print task_json
+        return task_json
+
+    def _add_task_options(self, task_json, options):
+        print options
+        m = re.match('\s+%(\d{4}-\d\d-\d\d)%', options)
+        if m:
+            task_json['duedate'] = m.group(1)
+        m = re.match('.+({.+})', options)
+        if m:
+            task_json.setdefault(
+                'tmpl_ext', {}).update(self._validated_json_loads(m.group(1)))
+        m = re.match('.+\[(\w+)\]', options)
+        if m:
+            task_json['rt_ext'] = m.group(1)
         return task_json
 
     def _add_task_description(self, task_json, input_line):
         desc = 'description'
-        task_json[desc] = '\n'.join([task_json[desc], input_line]) if task_json.get(desc) else input_line
+        task_json[desc] = \
+            '\n'.join([task_json[desc], input_line]) \
+            if task_json.get(desc) else input_line
         return task_json
 
     def _replace_template_vars(self, input_line):
-        return self.tmpl_vars_regex.sub(lambda match: self.tmpl_vars[match.group(1)], input_line)
+        return self.tmpl_vars_regex.sub(
+            lambda match: self.tmpl_vars[match.group(1)], input_line)
 
     def _add_template_variable(self, name, value):
         self.tmpl_vars[name] = value

@@ -17,6 +17,7 @@ class TaskExtractor:
         self.tmpl_vars = {}  # template variables dict
         self.tmpl_json = {}  # template json structures such {"project": {"key": "KEY"}}
         self.rt_vars = {}    # run-time variables (issueIDs)
+        self.links = []      # to keep link info
 
         self.default_params = options
         self.dry_run = dry_run
@@ -33,7 +34,6 @@ class TaskExtractor:
 
 # end of load() helpers
 #####################################################################################
-
 
     def validate_load(self, task_list):
         """
@@ -168,11 +168,9 @@ class TaskExtractor:
             task_json['tmpl_ext'] = self.tmpl_json.copy()
         if match.group(4):
             self._add_task_options(task_json, match.group(4))
-        print task_json
         return task_json
 
     def _add_task_options(self, task_json, options):
-        print options
         m = re.match('\s+%(\d{4}-\d\d-\d\d)%', options)
         if m:
             task_json['duedate'] = m.group(1)
@@ -183,6 +181,9 @@ class TaskExtractor:
         m = re.match('.+\[(\w+)\]', options)
         if m:
             task_json['rt_ext'] = m.group(1)
+        m = re.match('.+<(.+|.+)>', options)
+        if m:
+            task_json['link'] = m.group(1)
         return task_json
 
     def _add_task_description(self, task_json, input_line):
@@ -199,15 +200,18 @@ class TaskExtractor:
     def _add_template_variable(self, name, value):
         self.tmpl_vars[name] = value
         # here I recompile template vars regex
-        # sorted() is used to put vars with longer names at the beginning of regex
-        # otherwise vars with similar names will not be replaced as '|' is not greedy
-        self.tmpl_vars_regex = re.compile("\$(" + "|".join(map(re.escape, sorted(self.tmpl_vars.keys( ), reverse=True))) + ")")
+        # sorted() is used to put vars with longer names at the beginning of
+        # regex otherwise vars with similar names will not be replaced
+        # as '|' is not greedy
+        self.tmpl_vars_regex = \
+            re.compile("\$(" + "|".join(map(re.escape,
+                       sorted(self.tmpl_vars.keys(), reverse=True))) + ")")
 
     def _validated_json_loads(self, input_line):
         result = ''
         try:
             result = json.loads(input_line)
-        except json.JSONDecodeError, e:
+        except json.JSONDecodeError:
             raise TaskExtractorTemplateErrorJson(input_line)
         return result
 
@@ -218,15 +222,19 @@ class TaskExtractor:
         fields = {}
 
         fields.update(self.default_params)
-        if 'tmpl_ext' in task: fields.update(task['tmpl_ext'])
-        if 'duedate' in task: fields['duedate'] = task['duedate']
+        if 'tmpl_ext' in task:
+            fields.update(task['tmpl_ext'])
+        if 'duedate' in task:
+            fields['duedate'] = task['duedate']
         fields['summary'] = task['summary']
-        if 'description' in task: fields['description'] = task['description']
-        fields['issuetype'] = {'name':task['issuetype']}
-        fields['assignee'] = {'name':task['assignee']}
-        if 'parent' in task: fields['parent'] = {'key':task['parent']}
+        if 'description' in task:
+            fields['description'] = task['description']
+        fields['issuetype'] = {'name': task['issuetype']}
+        fields['assignee'] = {'name': task['assignee']}
+        if 'parent' in task:
+            fields['parent'] = {'key': task['parent']}
 
-        return {'fields':fields}
+        return {'fields': fields}
 
     def create_tasks(self, task_list):
         """
@@ -259,6 +267,9 @@ class TaskExtractor:
 
         if 'h5_task_key' in args:
             self._h5_task_completion(args)
+
+        for link in self.links:
+            self.create_link(link['inward'], link['outward'], link['type'])
 
         return '\n'.join(summary)
 
@@ -336,18 +347,43 @@ class TaskExtractor:
 
     def create_issue(self, issue):
         if ('description' in issue) and self.rt_vars:
-            issue['description'] = self._replace_realtime_vars(issue['description'])
+            issue['description'] = \
+                self._replace_realtime_vars(issue['description'])
         issue_id = self._create_issue_http(issue)
-        if issue.has_key('rt_ext'):
+        if 'rt_ext' in issue:
             self._add_runtime_variable(issue['rt_ext'], issue_id)
+        if 'link' in issue:
+            self._add_link_info(issue_id, issue['link'])
         return issue_id
 
+    def _add_link_info(self, issue_id, link_pattern):
+        m = re.match('([A-Z]+-\d+)\|(.+)', link_pattern)
+        if m:
+            self.links.append({'inward': m.group(1),
+                               'type': m.group(2),
+                               'outward': issue_id})
+        m = re.match('(.+)\|([A-Z]+-\d+)', link_pattern)
+        if m:
+            self.links.append({'inward': issue_id,
+                               'type': m.group(1),
+                               'outward': m.group(2)})
+        m = re.match('^([A-Z]+-\d+)$', link_pattern)
+        if m:
+            self.links.append({'inward': issue_id,
+                               'type': 'Inclusion',
+                               'outward': m.group(1)})
+        # TODO: check if there is no match
+
     def _add_runtime_variable(self, name, value):
-        self.rt_vars.update({name:value})
-        self.rt_vars_regex = re.compile("\$(" + "|".join(map(re.escape, sorted(self.rt_vars.keys( ), reverse=True))) + ")")
+        self.rt_vars.update({name: value})
+        self.rt_vars_regex = \
+            re.compile("\$(" + "|".join(map(re.escape,
+                       sorted(self.rt_vars.keys(), reverse=True))) + ")")
 
     def _replace_realtime_vars(self, desc):
-        return self.rt_vars_regex.sub(lambda match: self.rt_vars[match.group(1)], desc) if self.rt_vars else desc
+        return self.rt_vars_regex.sub(
+            lambda match: self.rt_vars[match.group(1)], desc) \
+            if self.rt_vars else desc
 
     def _create_issue_http(self, issue):
         """
@@ -365,39 +401,43 @@ class TaskExtractor:
         else:
             return 'DRYRUN-1234'
 
-
-    def create_link(self, inward_issue, outward_issue, link_type = 'Inclusion'):
+    def create_link(self, inward_issue, outward_issue, link_type='Inclusion'):
         """Creates an issue link between two issues.
 
         The specified link type in the request is used to create the link
-        and will create a link from the first issue to the second issue using the outward description.
+        and will create a link from the inward_issue to the outward_issue.
         The list of issue types can be retrieved using rest/api/2/issueLinkType
-        For now possible types are Block, Duplicate, Gantt Dependency, Inclusion, Reference
         """
 
         if not self.dry_run:
-            jira_link = {"type":{"name":link_type},"inwardIssue":{"key":inward_issue},"outwardIssue": {"key": outward_issue}}
+            jira_link = {"type": {"name": link_type},
+                         "inwardIssue": {"key": inward_issue},
+                         "outwardIssue": {"key": outward_issue}}
             return self._jira_request('issueLink', json.dumps(jira_link))
         else:
-          return 'dry run'
-
+            return 'dry run'
 
     def update_issue_desc(self, issue_key, issue_desc):
         if not self.dry_run:
             full_url = 'issue/' + issue_key
-            jira_data = {'update':{'description':[{'set':issue_desc}]}}
+            jira_data = {'update': {'description': [{'set': issue_desc}]}}
             return self._jira_request(full_url, json.dumps(jira_data), 'PUT')
         else:
             return 'dry run'
 
-
-    def _jira_request(self, action, data, method = 'POST', headers = {'Content-Type': 'application/json'}):
+    def _jira_request(self,
+                      action,
+                      data,
+                      method='POST',
+                      headers={'Content-Type': 'application/json'}):
         """Compose and make HTTP request to JIRA.
 
         url should be a string containing a valid URL.
         data is a str. headers is dict of HTTP headers.
-        Supported method are POST (for creating and linking) and PUT (for updating).
-        It expects also self.username and self.password to be set to perform basic HTTP authentication.
+        Supported method are POST (for creating and linking)
+        and PUT (for updating).
+        It expects also self.username and self.password to be set
+        to perform basic HTTP authentication.
         """
 
         if method == 'POST':
@@ -406,5 +446,3 @@ class TaskExtractor:
             return self.jira_connect.get(action)
         elif method == 'PUT':
             return self.jira_connect.put(action, data)
-
-

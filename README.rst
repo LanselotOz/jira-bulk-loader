@@ -89,9 +89,12 @@ A task can be `linked <https://jira.wargaming.net/rest/api/2/issueLinkType>`_ to
 
     | h5. Task1 summary \*assignee\* <JIRA-1234>
     | h5. Task2 summary \*assignee\* <JIRA-1234|Gantt-dependency>
+    | h5. Task3 summary \*assignee\* <Gantt-dependency|JIRA-1234>
 
 where 'Gantt-dependency' is a link type. If it is not specifyed, default value 'Inclusion' will be used.
 For the full list of possible link types see: https://<your-JIRA-URL>/rest/api/2/issueLinkType
+
+In this example Task1 will be included in JIRA-1234, JIRA-1234 will be blocked by Task2 and Task3 will be blocked by JIRA-1234.
 
 
 Dry run option

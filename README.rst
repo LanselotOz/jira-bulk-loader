@@ -129,7 +129,7 @@ In this case h5 tasks will be linked to h4 user story.
 
 
 Create sub-task of existing task or user story
-=============================================
+==============================================
 
 If you have a task in JIRA and want to create a sub-task for it, use the following syntax:
 

@@ -68,3 +68,19 @@ h5. h5 task *assignee* %2015-07-11% <JIRA-1234>
     te.create_link.assert_called_once_with(dry_run_key,
                                            'JIRA-1234',
                                            'Inclusion')
+
+
+def test_link_with_rt_var(te, dry_run_key):
+    input_json = [{'assignee': 'assignee', 'markup': 'h5.',
+                   'summary': 'h5 task1', 'rt_ext': 'LINK'},
+                  {'assignee': 'assignee', 'markup': 'h5.',
+                   'summary': 'h5 task2', 'line_number': 2,
+                   'description': 'line1 description', 'link': '$LINK'}]
+
+    te.create_link = MagicMock()
+    te.create_tasks(input_json)
+    assert te.links == [{'inward': dry_run_key, 'type': 'Inclusion',
+                         'outward': '$LINK'}]
+    te.create_link.assert_called_once_with(dry_run_key,
+                                           dry_run_key,
+                                           'Inclusion')

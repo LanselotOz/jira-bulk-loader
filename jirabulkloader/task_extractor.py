@@ -15,17 +15,19 @@ class TaskExtractor:
                  options={},
                  dry_run=False):
         self.tmpl_vars = {}  # template variables dict
-        self.tmpl_json = {}  # template json structures such {"project": {"key": "KEY"}}
+        self.tmpl_json = {}  # template json structures
         self.rt_vars = {}    # run-time variables (issueIDs)
         self.links = []      # to keep link info
 
         self.default_params = options
         self.dry_run = dry_run
 
-        self.jira_connect = JiraConnect(self._validate_url_and_type(jira_url), username, password)
+        self.jira_connect = JiraConnect(self._validate_url_and_type(jira_url),
+                                        username,
+                                        password)
 
 
-#####################################################################################
+# ###################################################################################
 # helpers for validate_load()
 
     def _validate_url_and_type(self, url):
@@ -33,11 +35,11 @@ class TaskExtractor:
         return url if match else "http://" + url
 
 # end of load() helpers
-#####################################################################################
+# ###################################################################################
 
     def validate_load(self, task_list):
         """
-        It takes the task_list prepared by load() and validate list of assignees and projects.
+        Take the task_list prepared by load() and validate assignees and projects
         """
         assignees = []
 
@@ -45,10 +47,12 @@ class TaskExtractor:
             if 'assignee' in line:
                 if line['assignee'] not in assignees:
                     assignees.append(line['assignee'])
-                    self._validate_user(line['assignee'], self._get_project_or_raise_exception(line))
+                    self._validate_user(
+                        line['assignee'],
+                        self._get_project_or_raise_exception(line))
 
 
-#####################################################################################
+# ###################################################################################
 # helpers for validate_load()
 
     def _get_project_or_raise_exception(self, input_line):
@@ -269,7 +273,9 @@ class TaskExtractor:
             self._h5_task_completion(args)
 
         for link in self.links:
-            self.create_link(link['inward'], link['outward'], link['type'])
+            self.create_link(self._replace_realtime_vars(link['inward']),
+                             self._replace_realtime_vars(link['outward']),
+                             link['type'])
 
         return '\n'.join(summary)
 
@@ -357,17 +363,17 @@ class TaskExtractor:
         return issue_id
 
     def _add_link_info(self, issue_id, link_pattern):
-        m = re.match('([A-Z]+-\d+)\|(.+)', link_pattern)
+        m = re.match('([A-Z]+-\d+|\$\w+)\|(.+)', link_pattern)
         if m:
             self.links.append({'inward': m.group(1),
                                'type': m.group(2),
                                'outward': issue_id})
-        m = re.match('(.+)\|([A-Z]+-\d+)', link_pattern)
+        m = re.match('(.+)\|([A-Z]+-\d+|\$\w+)', link_pattern)
         if m:
             self.links.append({'inward': issue_id,
                                'type': m.group(1),
                                'outward': m.group(2)})
-        m = re.match('^([A-Z]+-\d+)$', link_pattern)
+        m = re.match('^([A-Z]+-\d+|\$\w+)$', link_pattern)
         if m:
             self.links.append({'inward': issue_id,
                                'type': 'Inclusion',

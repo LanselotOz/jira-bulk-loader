@@ -1,15 +1,15 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name='jira-bulk-loader',
-    version='0.2.4',
-    packages=['jirabulkloader', 'jirabulkloader.test',],
+    version='0.2.6',
+    packages=['jirabulkloader', 'jirabulkloader.test'],
     author='Alexander Dudko',
     author_email='alex.dudko@gmail.com',
     license='GPLv3',
     url='http://bitbucket.org/oktopuz/jira-bulk-loader',
     scripts=['bin/jira-bulk-loader.py'],
-    description='An automation tool for creating tasks in Jira via RESTful API',
+    description='Create tasks in Jira via RESTful API',
     install_requires=[
         "simplejson >= 3.3.0",
         "requests >= 0.13.1",

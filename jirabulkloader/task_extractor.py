@@ -300,7 +300,7 @@ class TaskExtractor:
 
     def _create_sub_task(self, task_json, args):
         task_json['parent'] = \
-            args.get('h4_task_key') or args.get('h5_task_key')
+            args.get('h5_task_key') or args.get('h4_task_key')
         task_json['issuetype'] = u'Sub-task'
         task_key = self.create_issue(task_json)
         desc = self._make_task_caption(task_json, task_key)

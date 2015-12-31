@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='jira-bulk-loader',
     version='0.3.0',
-    packages=['jirabulkloader', 'jirabulkloader.test'],
+    packages=['jirabulkloader'],
     author='Alexander Dudko',
     author_email='alex.dudko@gmail.com',
     license='Apache 2.0',
@@ -11,9 +11,14 @@ setup(
     scripts=['bin/jira-bulk-loader.py'],
     description='Create tasks in Jira via RESTful API',
     install_requires=[
-        "simplejson >= 3.8.1",
-        "requests >= 2.9.1",
-        "pytest >= 2.8.5",
+        'jira >= 1.0.3',
+        'simplejson >= 3.8.1',
+        'requests >= 2.9.1',
+    ],
+    tests_require=[
+        'pytest',
+        'mock',
+        'nose',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

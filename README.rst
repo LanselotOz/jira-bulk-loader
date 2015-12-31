@@ -9,7 +9,7 @@ The template is written in human language with a few markup rules. jira-bulk-loa
 Requirements
 ============
 
-#. Python 2.6 or 2.7
+#. Python 2.7
 #. JIRA REST API version 2 (i.e. JIRA v5.0 and above)
 
 
@@ -228,6 +228,6 @@ The only restriction is: you can't reference a task that has not been created ye
 Issues and new ideas
 ====================
 
-If you found an issue or if you have an idea of improvement please visit `http://bitbucket.org/oktopuz/jira-bulk-loader/issues <http://bitbucket.org/oktopuz/jira-bulk-loader/issues>`_
+If you found an issue or if you have an idea of improvement please visit `https://github.com/oktopuz/jira-bulk-loader/issues <https://github.com/oktopuz/jira-bulk-loader/issues>`_
 
 

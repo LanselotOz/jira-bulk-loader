@@ -88,10 +88,10 @@ Link issues
 A task can be `linked <https://jira.wargaming.net/rest/api/2/issueLinkType>`_ to another task.
 
     | h5. Task1 summary \*assignee\* <JIRA-1234>
-    | h5. Task2 summary \*assignee\* <JIRA-1234|Gantt-dependency>
-    | h5. Task3 summary \*assignee\* <Gantt-dependency|JIRA-1234>
+    | h5. Task2 summary \*assignee\* <JIRA-1234|Relates>
+    | h5. Task3 summary \*assignee\* <Blocks|JIRA-1234>
 
-where 'Gantt-dependency' is a link type. If it is not specifyed, default value 'Inclusion' will be used.
+where 'Relates' and 'Blocks' are link types. If it is not specified, default value 'Relates' will be used.
 For the full list of possible link types see: https://<your-JIRA-URL>/rest/api/2/issueLinkType
 
 In this example Task1 will be included in JIRA-1234, JIRA-1234 will be blocked by Task2 and Task3 will be blocked by JIRA-1234.
@@ -128,10 +128,10 @@ In this case h5 tasks will be linked to h4 user story.
 
 
 
-Create sub-task of existing task or user story
+Create subtask of existing task or user story
 ==============================================
 
-If you have a task in JIRA and want to create a sub-task for it, use the following syntax:
+If you have a task in JIRA and want to create a subtask for it, use the following syntax:
 
     | ... JIRA-1234
     |   # Sub-task summary \*assignee1\*
@@ -222,7 +222,7 @@ Sometime it is necessary to create a reference to another task in the template. 
 
 When jira-bulk-loader creates 'h5 task1' and 'h5 task2' in Jira, $TASK_KEY1 and $TASK_KEY2 will be have their issue_id.
 
-The only restriction is: you can't reference a task that has not been created yet, i.e. template variables cannot be used before assignment.
+The only restriction is: you can't reference a task that has not been created yet, i.e. a template variable cannot be used before assignment.
 
 
 Issues and new ideas

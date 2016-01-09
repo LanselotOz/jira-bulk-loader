@@ -9,12 +9,12 @@ import unittest
 from mock import MagicMock, call
 import simplejson as json
 
+
 class TestTaskExtractor(unittest.TestCase):
-  
+
   def setUp(self):
-    self.jira_url = "http://jira.atlassian.com" # MUST BE CHANGED
-    options = {}
-    self.te = TaskExtractor(self.jira_url, "", "", options, dry_run = True)
+    jira = MagicMock();
+    self.te = TaskExtractor(jira, dry_run = True)
 
   def tearDown(self):
     self.te = None
@@ -200,31 +200,6 @@ class TestTaskExtractor(unittest.TestCase):
     expected_output = 'h5. h5 task 1 (DRY-RUN-XXXX)\nh5. h5 task 2 (DRY-RUN-XXXX)\n# sub-task of h5 task 2 (DRY-RUN-XXXX)'
     self.assertEquals(self.te.create_tasks(input_list), expected_output)
     self.assertEquals(self.te.create_issue.call_args_list, expected_result)
-
-##########################################################
-### jira_format
-
-  def test_jira_format_Simple_case(self):
-    input_dict = {'parent': 'DRY-RUN-XXXX', 'markup': '#', 'summary': 'sub-task', 'assignee': 'assignee', 'issuetype': 'Sub-task'}
-    expected_result = {'fields': { 'parent': {'key': 'DRY-RUN-XXXX'}, \
-        'summary': 'sub-task', 'assignee': {'name': 'assignee'}, 'issuetype': {'name': 'Sub-task'}}}
-    self.assertEquals(self.te.jira_format(input_dict), expected_result)
-
-  def test_jira_format_If_additional_fields_provided(self): 
-    options = {'project': {'key':'TestProject'}, 'item1':['subitem1', 'subitem2']}
-    self.te = TaskExtractor(self.jira_url, "", "", options, dry_run = True)
-    input_dict = {'parent': 'DRY-RUN-XXXX', 'markup': '#', 'summary': 'sub-task', 'assignee': 'assignee', 'issuetype': 'Sub-task'}
-    expected_result = {'fields': {'parent': {'key': 'DRY-RUN-XXXX'}, 'summary': 'sub-task', 'project': {'key': 'TestProject'}, \
-         'assignee': {'name': 'assignee'}, 'issuetype': {'name': 'Sub-task'}, 'item1':['subitem1', 'subitem2']}}
-    self.assertEquals(self.te.jira_format(input_dict), expected_result)
-
-  def test_jira_format_Replaces_default_params_by_tmpl_json(self):
-    options = {'project': {'key':'TestProject'}, 'duedate':'2012-03-01', 'item1':'default_value'}
-    self.te = TaskExtractor(self.jira_url, "", "", options, dry_run = True)
-    input_json = {'duedate':'2012-04-01', 'issuetype': 'Task', 'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', 'tmpl_ext':{'item1':'template_value'}}
-    expected_result = {'fields': {'summary': 'h5 task', 'project': {'key': 'TestProject'}, 'duedate':'2012-04-01', \
-          'assignee': {'name': 'assignee'}, 'issuetype': {'name': 'Task'}, 'item1':'template_value'}}
-    self.assertEquals(self.te.jira_format(input_json), expected_result)
 
 
 ##########################################################

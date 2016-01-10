@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
-
+from __future__ import print_function
 import re
 import simplejson as json
-from task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorTemplateErrorJson, TaskExtractorJiraValidationError
+from jirabulkloader.task_extractor_exceptions import TaskExtractorTemplateErrorProject, TaskExtractorTemplateErrorJson, TaskExtractorJiraValidationError
 from jira import JIRAError
 
 
@@ -395,10 +395,12 @@ class TaskExtractor:
 
         if not self.dry_run:
             try:
-                jira_issue = self.jira.create_issue(fields=self.jira_format(issue))
-                return jira_issue.key
-            except JIRAError, e:
-                error_message = "Can't create task in the line {0} of your template.\nJIRA error: {1}".format(issue['line_number'], e.text)
+                return self.jira.create_issue(
+                    fields=self.jira_format(issue)).key
+            except JIRAError as e:
+                error_message = "Can't create task in the line {0} of your "
+                "template.\nJIRA error: {1}".\
+                    format(issue['line_number'], e.text)
                 raise TaskExtractorJiraValidationError(error_message)
         else:
             return 'DRYRUN-1234'

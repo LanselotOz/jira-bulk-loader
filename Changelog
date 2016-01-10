@@ -3,10 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.3.0] - 2016-12-03
+## [0.3.0] - 2016-??-??
 ### Added
 - Changelog.
 - Integration with https://travis-ci.org/
+- Python 3.4 support.
 
 ### Changed
 - The project relocated to github.com

@@ -13,7 +13,6 @@ setup(
     install_requires=[
         'jira >= 1.0.3',
         'simplejson >= 3.8.1',
-        'requests >= 2.9.1',
     ],
     tests_require=[
         'pytest',
@@ -26,6 +25,7 @@ setup(
         'Intended Audience :: Information Technology',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
         'Topic :: Utilities',
         'License :: OSI Approved :: Apache Software License',
     ],

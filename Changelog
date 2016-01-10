@@ -1,0 +1,21 @@
+# Change Log
+All notable changes to this project will be documented in this file.
+
+## [Unreleased]
+
+## [0.3.0] - 2016-12-03
+### Added
+- Changelog.
+- Integration with https://travis-ci.org/
+
+### Changed
+- The project relocated to github.com
+- Switch to the Apache License, Version 2.0.
+- Use the jira-python module to interract with JIRA API.
+- Use 'Relates' as a default link type instead of 'Includes'.
+
+### Fixed
+
+### Removed
+- Drop Python 2.6 support.
+- Remove the JiraConnect module (in favor of jira-python).

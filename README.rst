@@ -32,11 +32,9 @@ Windows installation
 
 To install jira-bulk-loader on Windows:
 
-#. install Python 2.7 - http://www.python.org/download/windows/
-#. install setuptools - http://pypi.python.org/pypi/setuptools
-#. C:/Python27/Scripts/easy_install.exe jira-bulk-loader
-
-By default jira-bulk-loader.py will be installed in the C:/Python27/Scripts/ folder.
+#. Download and install the latest Python 2.7 - https://www.python.org/downloads/windows/
+#. Run C:\Python27\python.exe -m pip install -U pip jira-bulk-loader
+#. Run C:\Python27\Scripts\jira-bulk-loader.py -h to verify installation
 
 
 Very simple case

@@ -9,22 +9,16 @@ The template is written in human language with a few markup rules. jira-bulk-loa
 Requirements
 ============
 
-#. Python 2.7
+#. Python 2.7, 3.4, 3.5
 #. JIRA REST API version 2 (i.e. JIRA v5.0 and above)
 
 
 Linux installation
 ==================
 
-To install jira-bulk-loader, simply: ::
+To install jira-bulk-loader, simply run: ::
 
     $ pip install jira-bulk-loader
-
-Or, if you absolutely must: ::
-
-    $ easy_install jira-bulk-loader
-
-By default jira-bulk-loader.py will be installed in the /usr/bin/ folder.
 
 
 Windows installation
@@ -32,11 +26,9 @@ Windows installation
 
 To install jira-bulk-loader on Windows:
 
-#. install Python 2.7 - http://www.python.org/download/windows/
-#. install setuptools - http://pypi.python.org/pypi/setuptools
-#. C:/Python27/Scripts/easy_install.exe jira-bulk-loader
-
-By default jira-bulk-loader.py will be installed in the C:/Python27/Scripts/ folder.
+#. Download and install the latest Python 2.7 - https://www.python.org/downloads/windows/
+#. Run C:\\Python27\\python.exe -m pip install -U pip jira-bulk-loader
+#. Run C:\\Python27\\Scripts\\jira-bulk-loader.py -h to verify installation
 
 
 Very simple case

@@ -2,8 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Multiple links, i.e. <JIRA-1,JIRA-2,JIRA-3>
+- Oauth support
 
-## [0.3.0] - 2016-??-??
+## [0.3.0] - 2016-01-23
 ### Added
 - Changelog.
 - Integration with https://travis-ci.org/

@@ -16,15 +16,9 @@ Requirements
 Linux installation
 ==================
 
-To install jira-bulk-loader, simply: ::
+To install jira-bulk-loader, simply run: ::
 
     $ pip install jira-bulk-loader
-
-Or, if you absolutely must: ::
-
-    $ easy_install jira-bulk-loader
-
-By default jira-bulk-loader.py will be installed in the /usr/bin/ folder.
 
 
 Windows installation
@@ -33,8 +27,8 @@ Windows installation
 To install jira-bulk-loader on Windows:
 
 #. Download and install the latest Python 2.7 - https://www.python.org/downloads/windows/
-#. Run C:\Python27\python.exe -m pip install -U pip jira-bulk-loader
-#. Run C:\Python27\Scripts\jira-bulk-loader.py -h to verify installation
+#. Run C:\\Python27\\python.exe -m pip install -U pip jira-bulk-loader
+#. Run C:\\Python27\\Scripts\\jira-bulk-loader.py -h to verify installation
 
 
 Very simple case

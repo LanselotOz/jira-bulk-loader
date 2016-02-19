@@ -1,5 +1,13 @@
 from setuptools import setup
 
+
+def get_long_description():
+    import os
+    import codecs
+    fpath_here = os.path.dirname(__file__)
+    fpath_readme = os.path.join(fpath_here, 'README.rst')
+    return codecs.open(fpath_readme, 'r', 'utf8').read()
+
 setup(
     name='jira-bulk-loader',
     version='0.3.0',
@@ -10,6 +18,7 @@ setup(
     url='https://github.com/oktopuz/jira-bulk-loader',
     scripts=['bin/jira-bulk-loader.py'],
     description='Create tasks in Jira via RESTful API',
+    long_description=get_long_description(),
     install_requires=[
         'jira >= 1.0.3',
         'simplejson >= 3.8.1',

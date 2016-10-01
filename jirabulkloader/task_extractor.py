@@ -172,17 +172,17 @@ class TaskExtractor:
         return task_json
 
     def _add_task_options(self, task_json, options):
-        m = re.match('\s+%(\d{4}-\d\d-\d\d)%', options)
+        m = re.search('\s%(\d{4}-\d\d-\d\d)%', options)
         if m:
             task_json['duedate'] = m.group(1)
-        m = re.match('.+({.+})', options)
+        m = re.search('\s({.+})', options)
         if m:
             task_json.setdefault(
                 'tmpl_ext', {}).update(self._validated_json_loads(m.group(1)))
-        m = re.match('.+\[(\w+)\]', options)
+        m = re.search('\s\[(\w+)\]', options)
         if m:
             task_json['rt_ext'] = m.group(1)
-        m = re.match('.+<(.+|.+)>', options)
+        m = re.search('\s<(.+|.+)>', options)
         if m:
             task_json['link'] = m.group(1)
         return task_json

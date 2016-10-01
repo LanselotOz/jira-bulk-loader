@@ -7,7 +7,6 @@ from jirabulkloader.task_extractor_exceptions import TaskExtractorTemplateErrorP
 
 import unittest
 from mock import MagicMock, call
-import simplejson as json
 
 
 class TestTaskExtractor(unittest.TestCase):
@@ -97,27 +96,6 @@ class TestTaskExtractor(unittest.TestCase):
   def test_load_json_if_it_is_not_valid(self):
     input_text = '{fail test}'
     self.assertRaises(TaskExtractorTemplateErrorJson, self.te.load, input_text)
-
-  def test_load_Check_dueDate_and_JSON_in_one_line(self):
-    input_text = 'h5. h5 task1 *assignee* %2012-04-01% {"item2":"test2"}\nh5. h5 task2 *assignee*'
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task1', \
-            'duedate':'2012-04-01', 'tmpl_ext':{"item2":"test2"}, 'line_number': 1}, \
-            {'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task2', 'line_number': 2}]
-    self.assertEquals(expected_result, self.te.load(input_text))
-
-  def test_load_Check_JSON_inline(self):
-    input_text = '{"item1":{"name":"test"}}\nh5. h5 task *assignee* {"item2":"test2"}'
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', \
-            'line_number': 2, 'tmpl_ext':{"item1":{"name":"test"}, "item2":"test2"}}]
-    self.assertEquals(expected_result, self.te.load(input_text))
-
-  def test_load_Check_JSON_inline_replacement(self):
-    input_text = '{"item1":{"name":"test"}}\n{"item2":"test2"}\nh5. h5 task *assignee* {"item1":"test1"}\n#* Sub-task 1 *assignee*'
-    expected_result = [{'assignee': 'assignee', 'markup': 'h5.', 'summary': 'h5 task', \
-            'line_number': 3, 'tmpl_ext':{"item1":"test1", "item2":"test2"}}, \
-            {'assignee': 'assignee', 'markup': '#*', 'summary': 'Sub-task 1', \
-            'line_number': 4, 'tmpl_ext':{"item1":{"name":"test"}, "item2":"test2"}}]
-    self.assertEquals(expected_result, self.te.load(input_text))
 
 
 ##########################################################

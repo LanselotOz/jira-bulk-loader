@@ -17,6 +17,21 @@ def dry_run_key():
     return 'DRYRUN-1234'
 
 
+@pytest.fixture
+def issue(dry_run_key):
+    return MagicMock(name='Issue', key=dry_run_key)
+
+
+@pytest.fixture
+def te_real(issue):
+    """TaskExtractor instance"""
+    jira = MagicMock(name='jira')
+    te = TaskExtractor(jira)
+    te.jira.create_issue = MagicMock(return_value=issue)
+    te.jira.add_watcher = MagicMock()
+    return te
+
+
 @pytest.fixture()
 def std_te_input():
     """Standard input test for TaskExtractor.load testing"""

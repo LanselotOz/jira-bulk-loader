@@ -107,7 +107,7 @@ class TaskExtractor:
         result = []
         line_number = 1
 
-        pattern_task = re.compile('^(h5\.|h4\.|#[*#]?|\(-\))\s+(.+)\s+\*([_\-A-z]+)\*(.*)')
+        pattern_task = re.compile('^(h5\.|h4\.|#[*#]?|\(-\))\s+(.+)\s+\*([_\-A-z0-9]+)\*(.*)')
         pattern_vars = re.compile('^\[(\w+)=(.+)\]$')
         pattern_json = re.compile('^{.+}$')
         pattern_existing_task = re.compile('^(\.{2,3})\s([A-Z].+\-\d.+)$')
@@ -172,19 +172,23 @@ class TaskExtractor:
         return task_json
 
     def _add_task_options(self, task_json, options):
-        m = re.search('\s%(\d{4}-\d\d-\d\d)%', options)
-        if m:
-            task_json['duedate'] = m.group(1)
-        m = re.search('\s({.+})', options)
-        if m:
+        m_date = re.search('\s%(\d{4}-\d\d-\d\d)%', options)
+        if m_date:
+            task_json['duedate'] = m_date.group(1)
+        m_json = re.search('\s({.+})', options)
+        if m_json:
             task_json.setdefault(
-                'tmpl_ext', {}).update(self._validated_json_loads(m.group(1)))
-        m = re.search('\s\[(\w+)\]', options)
-        if m:
-            task_json['rt_ext'] = m.group(1)
-        m = re.search('\s<(.+|.+)>', options)
-        if m:
-            task_json['link'] = m.group(1)
+                'tmpl_ext',
+                {}).update(self._validated_json_loads(m_json.group(1)))
+        m_vars = re.search('\s\[(\w+)\]', options)
+        if m_vars:
+            task_json['rt_ext'] = m_vars.group(1)
+        m_links = re.search('\s<(.+|.+)>', options)
+        if m_links:
+            task_json['link'] = m_links.group(1)
+        watchers = re.findall('\s\+(\w+)\+', options)
+        if watchers:
+            task_json['watchers'] = watchers
         return task_json
 
     def _add_task_description(self, task_json, input_line):
@@ -395,11 +399,15 @@ class TaskExtractor:
 
         if not self.dry_run:
             try:
-                return self.jira.create_issue(
-                    fields=self.jira_format(issue)).key
+                jira_issue = self.jira.create_issue(
+                    fields=self.jira_format(issue))
+                if 'watchers' in issue:
+                    for w in issue['watchers']:
+                        self.jira.add_watcher(jira_issue, w)
+                return jira_issue.key
             except JIRAError as e:
-                error_message = "Can't create task in the line {0} of your "
-                "template.\nJIRA error: {1}".\
+                error_message = ("Can't create task in the line {0} of your "
+                "template.\nJIRA error: {1}").\
                     format(issue['line_number'], e.text)
                 raise TaskExtractorJiraValidationError(error_message)
         else:

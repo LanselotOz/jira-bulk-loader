@@ -20,7 +20,7 @@ setup(
     description='Create tasks in Jira via RESTful API',
     long_description=get_long_description(),
     install_requires=[
-        'jira >= 1.0.3',
+        'jira >= 1.0.7',
         'simplejson >= 3.8.1',
     ],
     tests_require=[

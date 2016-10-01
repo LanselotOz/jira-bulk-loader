@@ -44,7 +44,12 @@ def get_template(template_filename):
 
     import io
     import codecs
+    import sys
 
-    with io.open(template_filename, 'rt', encoding='utf-8') as f:
-        tmpl = f.read()
-        return tmpl[1:] if tmpl[0] == unicode(codecs.BOM_UTF8, 'utf8') else tmpl
+    if sys.version_info < (3, 0):
+        with io.open(template_filename, 'rt', encoding='utf-8') as f:
+            tmpl = f.read()
+            return tmpl[1:] if tmpl[0] == unicode(codecs.BOM_UTF8, 'utf8') else tmpl
+    else:
+        with open(template_filename, encoding='utf-8') as f:
+            return f.read()

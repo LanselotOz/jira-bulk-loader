@@ -65,7 +65,7 @@ Template:
     |	=description line 1
     | 	=description line 2
     |
-    | 	# First sub-task summary \*assignee1\*
+    | 	# First sub-task summary \*assignee1\* +watcher1+
     | 	=description line 3
     |
     |	# Second sub-task summary \*assignee2\* %2012-09-18%
@@ -74,11 +74,12 @@ Template:
 and the command:
 
     jira-bulk-loader.py -U <your_username> -P <your_password> \
-    -H jira.your_domain.org -D 2012-09-20 -W PRKEY template_file
+    -H jira.your_domain.org -D 2016-10-20 -W PRKEY template_file
 
 It will create a task with two subtasks.
-Moreover it also sets due date 2012-09-18 (YYYY-mm-DD) to the 2nd sub-task,
-and 2012-09-20 to the task and its first sub-task.
+Moreover it sets due date 2016-10-01 (YYYY-mm-DD) for the 2nd sub-task.
+All other created tasks will have due date set to 2016-10-20.
+User 'watcher1' will be added to the list of watchers of the first task.
 
 
 Link issues
@@ -188,6 +189,7 @@ Every task definition can be followed by one or more inline auxiliary
 parameters:
 
 - %YYYY-MM-DD% - due date
+- +username+ - watchers (can be more than one: +watcher1+ +warcher2+ and etc)
 - <JIRA-1234> or <JIRA-1234|Inclusion> - link
 - {"components": [{"name": "Localizations"}]} - any json data that will be sent directly to JIRA API as a part of `create request <https://docs.atlassian.com/jira/REST/latest/#d2e4264>`_.
 

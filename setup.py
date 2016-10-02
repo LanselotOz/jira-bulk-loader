@@ -10,7 +10,7 @@ def get_long_description():
 
 setup(
     name='jira-bulk-loader',
-    version='0.3.0',
+    version='0.3.1',
     packages=['jirabulkloader'],
     author='Alexander Dudko',
     author_email='alex.dudko@gmail.com',

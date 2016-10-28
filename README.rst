@@ -68,7 +68,7 @@ Template:
     | 	# First sub-task summary \*assignee1\* +watcher1+
     | 	=description line 3
     |
-    |	# Second sub-task summary \*assignee2\* %2012-09-18%
+    |	# Second sub-task summary \*assignee2\* %2016-10-01%
     | 	=description line 3
 
 and the command:
@@ -158,7 +158,7 @@ It is possible to define task attributes in template:
     | 	h5. 1st task summary \*assignee1\*
     |	=description
     |
-    | 	h5. 2nd task summary \*assignee2\* {"components": [{"name": "Test"}]}
+    | 	h5. 2nd task summary \*assignee2\* {"components": [{"name": "Localizations"}]}
     |	=description
     |
     | 	h5. 3rd task summary \*assignee3\*
